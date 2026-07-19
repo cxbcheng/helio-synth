@@ -1,0 +1,26 @@
+name: helio-synth
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+
+  # Data Fetching & Helioseismology
+  - sunpy
+  - drms
+  - astropy
+
+  # Signal Processing & Math
+  - numpy
+  - scipy
+  - scikit-learn
+
+  # UI & Visualization
+  - matplotlib
+  - pyqt
+
+  # Audio Processing
+  - pip:
+    - soundfile
+    - pydub
