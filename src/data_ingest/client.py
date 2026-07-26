@@ -1,14 +1,16 @@
 import os
-from dotenv import load_dotenv
 import drms
+from dotenv import load_dotenv
 
-load_dotenv()
-email_address = os.environ.get('JSOC_EMAIL')
-out_dir = os.environ.get('DATA_DIR')
+def get_drms_client(email: str | None = None) -> drms.Client:
+    """
+    Factory function to initialize and validate a DRMS Client.
+    """
+    if not email:
+        load_dotenv()
+        email = os.environ.get('JSOC_EMAIL')
+    if not email:
+        raise ValueError("JSOC Email is required. Provide it as an argument or set JSOC_EMAIL in .env.")
 
-if not email_address:
-    raise ValueError('Email address not specified. Set the environmental variable JSOC_EMAIL as your JSOC email address.')
-if not out_dir or not os.path.exists(out_dir):
-    raise ValueError('Data directory not specified or its path does not exist. Set the environmental variable DATA_DIR.')
-
-client = drms.Client(email=email_address)
+    client = drms.Client(email=email)
+    return client
