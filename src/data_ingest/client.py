@@ -1,5 +1,4 @@
 import os
-import re
 from pathlib import Path
 import drms
 from dotenv import load_dotenv
@@ -53,7 +52,7 @@ def download_dopplergram_fits(
     target_dir.mkdir(parents=True, exist_ok=True)
 
     # Create the query
-    qstr = f"hmi.v_45s[{start_time}-{end_time}@{cadence}]{{image}}"
+    qstr = f"hmi.v_45s[{start_time}-{end_time}@{cadence}s]{{image}}"
 
     # Processing parameters to reduce the image size
     # http://jsoc.stanford.edu/doxygen_html/group__jsoc__rebin.html
