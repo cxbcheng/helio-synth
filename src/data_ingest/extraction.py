@@ -11,3 +11,4 @@ def extract_velocity_timeseries(data_dir: str | Path, x: float, y: float) -> np.
     :return: Velocity time series extracted from the FITS files.
     """
     target_dir = Path(data_dir)
+    raise NotImplementedError()
