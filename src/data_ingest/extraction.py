@@ -10,29 +10,30 @@ def extract_velocity_timeseries(
         x: int,
         y: int,
         cadence: int,
-        max_files: int | None = None,
+        start_index: int | None = None,
+        end_index: int | None = None,
 ) -> tuple[Time, np.ndarray]:
     """
     Parses local FITS files in the provided directory and extracts a velocity timeseries
     for a pixel coordinate (x, y) on the solar disk image relative to the scale specified
     in the FITS file. Full resolution is 4096x4096; hence, valid positions include
     x, y \in [0, int(4096*scale)-1].
+    If `start_index` or `end_index` specified, a subset of the files from the directory
+    will be processed. Otherwise, all the files will be extracted.
     :param data_dir: Directory containing FITS files
     :param x: x pixel position
     :param y: y pixel position
     :param cadence: The expected time step or sampling interval (seconds) between any two
         data points. The time of the image is cross-validated with the cadence to mark
         any missing data with NaNs.
-    :param max_files:
+    :param start_index: First file index to process (inclusive).
+    :param end_index: Last file index to process (exclusive).
     :return: (times, velocities). A uniform-cadence timeseries. Velocity unit: m/s.
         velocities[i] is NaN whenever no valid sample was found for that time slot.
     :raises ValueError: if (x, y) is out of bounds, or no valid samples are found.
     """
     target_dir = Path(data_dir)
-    fits_files = sorted(list(target_dir.glob('*.fits')))
-
-    if max_files is not None:
-        fits_files = fits_files[:max_files]
+    fits_files = sorted(list(target_dir.glob('*.fits')))[start_index:end_index]
 
     t_recs = []
     velocities = []
