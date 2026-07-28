@@ -30,7 +30,7 @@ def sonify_solar(v: ndarray,
     """
     # Original sampling frequency
     f_orig = 1.0 / dt
-    v_filtered = _butter_bandpass_filter(v, f_orig, high_cutoff, low_cutoff)
+    v_filtered = _butter_bandpass_filter(v, fs=f_orig, low_cutoff=low_cutoff, high_cutoff=high_cutoff)
     return _normalize_peak(_resample_and_compress(v_filtered, f_orig, fs, alpha))
 
 
