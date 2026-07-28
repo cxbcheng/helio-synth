@@ -12,3 +12,9 @@ def clean_drms_timestamp(timestamp: str) -> str:
     ts_clean = re.sub(r'[-:.]', '', ts_clean)
     ts_clean = ts_clean.replace('T', '_')
     return ts_clean
+
+def make_query_name(start_time: str, end_time: str, scale: float, cadence: int) -> str:
+    """
+    Helper to standardize raw data folder lookups for hmi_v.45s data products.
+    """
+    return clean_drms_timestamp(f"hmi_v_45s_{start_time}_{end_time}_{scale}_{cadence}")
