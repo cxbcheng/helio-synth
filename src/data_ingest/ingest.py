@@ -24,6 +24,11 @@ def run_ingest(
     """
     Downloads (if necessary), extracts, caches, and returns a Doppler velocity
     time series for a specified spatial location and time range.
+    Note that the time format should fit "2020.01.01_00:00:00_TAI", i.e. a period to
+    delimit the date, an underscore between the date and time, and a suffix _TAI.
+    This directly matches the DRMS query time parameter format, and it will also be used
+    (although in a cleaner format determined by `make_query_name`) to look up from or
+    download into the raw data folder.
 
     :param start_time: Start of the DRMS query time range.
     :param end_time: End of the DRMS query time range.
