@@ -3,11 +3,11 @@ from pathlib import Path
 import numpy as np
 from astropy.time import Time
 
-from src.data_ingest.client import download_dopplergram_fits
-from src.data_ingest.extraction import extract_velocity_timeseries
-from src.data_ingest.storage import load_timeseries_npz, save_timeseries_npz
-from src.data_ingest.utils import make_query_name
-from src.paths import RAW_DATA_DIR, PROCESSED_DATA_DIR
+from heliosynth.data_ingest.client import download_dopplergram_fits
+from heliosynth.data_ingest.extraction import extract_velocity_timeseries
+from heliosynth.data_ingest.storage import load_timeseries_npz, save_timeseries_npz
+from heliosynth.data_ingest.utils import make_query_name
+from heliosynth.paths import RAW_DATA_DIR, PROCESSED_DATA_DIR
 
 
 def run_ingest(

@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "heliosynth"
+version = "0.1.0"
+description = "Helioseismic data processing and sonification pipeline"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    # Data Fetching & Helioseismology
+    "sunpy",
+    "drms",
+    "astropy",
+    # Signal Processing & Math
+    "numpy",
+    "scipy",
+    "scikit-learn",
+    # UI & Visualization
+    "matplotlib",
+    "pyqt6",
+    # Audio Processing & Utilities
+    "soundfile",
+    "pydub",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[project.scripts]
+heliosynth = "heliosynth.__main__:main"

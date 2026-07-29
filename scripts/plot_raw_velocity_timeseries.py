@@ -9,7 +9,7 @@ you will be prompted to download them.
 
 from matplotlib import pyplot as plt
 
-from src.data_ingest.ingest import run_ingest
+from heliosynth.data_ingest.ingest import run_ingest
 
 
 def main():
