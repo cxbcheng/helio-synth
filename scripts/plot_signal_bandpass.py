@@ -16,6 +16,7 @@ you will be prompted to download them.
 from matplotlib import pyplot as plt
 
 from heliosynth.data_ingest.ingest import run_ingest
+from heliosynth.paths import EXAMPLE_DATA_DIR
 from heliosynth.processing.cleaning import interpolate_short_gaps, zero_fill_with_taper
 from heliosynth.processing.filter import filter_segments
 
@@ -35,7 +36,8 @@ def main():
     plt_x_end = plt_x_start + 3600  # 60 minute duration
 
     # Load velocity time series
-    times, velocities = run_ingest(start_time=start_time, end_time=end_time, x=x, y=y)
+    times, velocities = run_ingest(start_time=start_time, end_time=end_time, x=x, y=y,
+                                   processed_data_dir=EXAMPLE_DATA_DIR)
     elapsed = (times - times[0]).sec
 
     velocities = interpolate_short_gaps(velocities, max_gap=3)
