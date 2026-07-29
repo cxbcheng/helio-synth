@@ -30,7 +30,7 @@ MANIFEST
 #   Exclude example data.
 data/raw/*
 data/processed/*
-!data/example/
+!data/examples/
 
 # PyInstaller
 #   Usually these files are written by a python script from a template
