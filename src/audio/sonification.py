@@ -2,6 +2,9 @@ import numpy as np
 from numpy import ndarray
 from scipy import signal
 
+from src.processing.filter import bandpass_filter
+
+
 def sonify_solar(v: ndarray,
                  dt: float,
                  alpha: float = 1,
@@ -28,29 +31,12 @@ def sonify_solar(v: ndarray,
     :param high_cutoff: High cutoff frequency for bandpass filter.
     :return: The velocity time series sonified.
     """
+    print("Warning: this method is susceptible to becoming deprecated soon.")
+
     # Original sampling frequency
     f_orig = 1.0 / dt
-    v_filtered = _butter_bandpass_filter(v, fs=f_orig, low_cutoff=low_cutoff, high_cutoff=high_cutoff)
-    return _normalize_peak(_resample_and_compress(v_filtered, f_orig, fs, alpha))
-
-
-def _butter_bandpass_filter(x: ndarray, fs: float, low_cutoff: float, high_cutoff: float, filter_order=4) -> ndarray:
-    """
-    Applies a forward-backward Butterworth bandpass filter on a signal.
-    :param x: The array of data to be filtered.
-    :param fs: Sampling frequency of the signal.
-    :param low_cutoff: Low cutoff frequency for bandpass filter.
-    :param high_cutoff: High cutoff frequency for bandpass filter.
-    :param filter_order: The order of the filter before forward-backward filtering.
-        After forward-backward filtering is applied, the filter technically has double this order.
-    :return: The filtered signal.
-    """
-    sos = signal.butter(N=filter_order,
-                        Wn=[low_cutoff, high_cutoff],
-                        fs=fs,
-                        btype='bandpass',
-                        output='sos')
-    return signal.sosfiltfilt(sos, x)
+    v_filtered = bandpass_filter(v, fs=f_orig, low_cutoff=low_cutoff, high_cutoff=high_cutoff)
+    return normalize_peak(_resample_and_compress(v_filtered, f_orig, fs, alpha))
 
 
 def _resample_and_compress(x: ndarray, f_orig: float, f_target: int, alpha: float) -> ndarray:
@@ -74,7 +60,7 @@ def _resample_and_compress(x: ndarray, f_orig: float, f_target: int, alpha: floa
     return signal.resample(x, num_samples_scaled)
 
 
-def _normalize_peak(x: ndarray) -> ndarray:
+def normalize_peak(x: ndarray) -> ndarray:
     """
     Normalizes the peaks of a signal to [-1.0, 1.0].
     :param x: The array of data to be normalized.
