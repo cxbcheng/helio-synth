@@ -28,8 +28,11 @@ MANIFEST
 
 # Data folders
 #   Exclude example data.
+#   .gitkeep files to keep empty directories in history.
 data/raw/*
 data/processed/*
+!data/raw/.gitkeep
+!data/data/processed/.gitkeep
 !data/examples/
 
 # PyInstaller
