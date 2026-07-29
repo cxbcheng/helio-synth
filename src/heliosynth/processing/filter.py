@@ -2,7 +2,7 @@ import numpy as np
 from numpy import ndarray
 from scipy import signal
 
-from src.heliosynth.processing.cleaning import find_runs
+from heliosynth.processing.cleaning import find_runs
 
 
 def _get_min_signal_len(filter_order: int) -> int:
