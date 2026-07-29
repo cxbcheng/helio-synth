@@ -15,9 +15,9 @@ you will be prompted to download them.
 
 from matplotlib import pyplot as plt
 
-from src.data_ingest.ingest import run_ingest
-from src.processing.cleaning import interpolate_short_gaps, zero_fill_with_taper
-from src.processing.filter import filter_segments
+from heliosynth.data_ingest.ingest import run_ingest
+from heliosynth.processing.cleaning import interpolate_short_gaps, zero_fill_with_taper
+from heliosynth.processing.filter import filter_segments
 
 
 def main():

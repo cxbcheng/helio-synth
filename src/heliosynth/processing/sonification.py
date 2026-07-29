@@ -2,7 +2,7 @@ import numpy as np
 from numpy import ndarray
 from scipy import signal
 
-from src.processing.filter import bandpass_filter
+from src.heliosynth.processing.filter import bandpass_filter
 
 
 def sonify_solar(v: ndarray,
