@@ -20,6 +20,7 @@ def run_ingest(
         raw_data_dir: str | Path = RAW_DATA_DIR,
         processed_data_dir: str | Path = PROCESSED_DATA_DIR,
         prompt_download: bool = True,
+        email: str | None = None,
 ) -> tuple[Time, np.ndarray]:
     """
     Downloads (if necessary), extracts, caches, and returns a Doppler velocity
@@ -39,6 +40,8 @@ def run_ingest(
     :param raw_data_dir: Directory containing cached raw FITS files.
     :param processed_data_dir: Directory containing cached processed time series.
     :param prompt_download: Whether to prompt the user before downloading.
+    :param email: Registered JSOC email to download from if needed. Leave blank
+        if this is already provided as `JSOC_EMAIL` in `.env`.
     :return: (times, velocities). Velocity unit: m/s
     """
     # Get directory for the particular data given
@@ -59,6 +62,7 @@ def run_ingest(
             scale=scale,
             cadence=cadence,
             download_dir=raw_cache_dir,
+            email=email,
         )
     else:
         print(f"Found {len(existing_fits)} FITS files for the directory {raw_cache_dir}.")
