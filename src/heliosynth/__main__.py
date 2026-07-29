@@ -1,7 +1,6 @@
 def main():
     print('Initializing HelioSynth...')
-    # TODO: Load UI and initialize SunPy data pipeline
-
+    raise NotImplementedError('The main user pipeline has not been implemented yet.')
 
 if __name__ == '__main__':
     main()
