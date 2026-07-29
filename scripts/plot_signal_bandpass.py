@@ -16,7 +16,7 @@ you will be prompted to download them.
 from matplotlib import pyplot as plt
 
 from src.data_ingest.ingest import run_ingest
-from src.processing.cleaning import interpolate_short_gaps
+from src.processing.cleaning import interpolate_short_gaps, zero_fill_with_taper
 from src.processing.filter import filter_segments
 
 # Change parameters here to test different regions/timeframes
@@ -38,6 +38,7 @@ elapsed = (times - times[0]).sec
 
 velocities = interpolate_short_gaps(velocities, max_gap=3)
 velocities = filter_segments(velocities, low_cutoff=low_cutoff, high_cutoff=high_cutoff, filter_order=2)
+velocities = zero_fill_with_taper(velocities)
 
 plt.figure()
 plt.plot(elapsed, velocities)
