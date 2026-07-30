@@ -1,8 +1,11 @@
 from pathlib import Path
 
 import numpy as np
+from PIL import Image
 from astropy.io import fits
 from astropy.time import Time, TimeDelta
+
+from heliosynth.processing.imaging import remove_low_order_trend, render_dopplergram
 
 
 def extract_velocity_timeseries(
@@ -118,3 +121,33 @@ def _clean_t_rec(t_rec: str) -> str:
     for easy conversion via astropy.time.Time.
     """
     return t_rec.removesuffix('_TAI').replace('.', '-', 2).replace('_', 'T')
+
+
+def load_dopplergram(fits_file: Path) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Loads the Dopplergram from the FITS file.
+    Returns (velocity, disk_mask) -- the 2D Doppler velocity data and a boolean on-disk mask,
+        intended to indicate where NaN/Inf values exist (due to being missing or off-disk).
+    """
+    with fits.open(fits_file) as hdul:
+        velocity = hdul[1].data.astype(np.float32)
+        disk_mask = np.isfinite(velocity)
+
+    return velocity, disk_mask
+
+
+def extract_solar_image(fits_file: Path, out_size: int | None = None,
+                        v_min: float = -3000, v_max: float = 3000,
+                        trend_order: int | None = 2) -> Image.Image:
+    """
+    Convenience wrapper to load, clean, and render a single FITS file.
+    Returns a PIL Image representing a diverging color colormap of the solar image.
+    For extended documentation, see `load_dopplergram`, `remove_low_order_trend`,
+    and `render_dopplergram`.
+    If `trend_order` is set to None, then no trend order removal is performed
+    and the raw Dopplergram image is returned.
+    """
+    velocity, disk_mask = load_dopplergram(fits_file)
+    if trend_order is not None:
+        velocity = remove_low_order_trend(velocity, disk_mask, trend_order)
+    return render_dopplergram(velocity, disk_mask, v_min=v_min, v_max=v_max, out_size=out_size)
