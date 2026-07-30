@@ -7,7 +7,7 @@ from heliosynth.data_ingest.client import download_dopplergram_fits
 from heliosynth.data_ingest.extraction import extract_velocity_timeseries
 from heliosynth.data_ingest.storage import load_timeseries_npz, save_timeseries_npz
 from heliosynth.data_ingest.utils import make_query_name
-from heliosynth.paths import RAW_DATA_DIR, PROCESSED_DATA_DIR
+from heliosynth.paths import RAW_DATA_DIR, TIMESERIES_DATA_DIR
 
 
 def run_ingest(
@@ -18,7 +18,7 @@ def run_ingest(
         x: int = 256,
         y: int = 256,
         raw_data_dir: str | Path = RAW_DATA_DIR,
-        processed_data_dir: str | Path = PROCESSED_DATA_DIR,
+        processed_data_dir: str | Path = TIMESERIES_DATA_DIR,
         prompt_download: bool = True,
         email: str | None = None,
 ) -> tuple[Time, np.ndarray]:

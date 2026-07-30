@@ -33,7 +33,7 @@ reads this automatically. Alternatively, pass `email=...` directly to
 Do not commit `.env` to git (it should already be listed in `.gitignore`).
 """
 from heliosynth.data_ingest.ingest import run_ingest
-from heliosynth.paths import PROCESSED_DATA_DIR, RAW_DATA_DIR
+from heliosynth.paths import TIMESERIES_DATA_DIR, RAW_DATA_DIR
 
 
 def main():
@@ -56,7 +56,7 @@ def main():
     """
     times, velocities = run_ingest(start_time=start_time, end_time=end_time, x=x, y=y, scale=scale,
                                    raw_data_dir=RAW_DATA_DIR,
-                                   processed_data_dir=PROCESSED_DATA_DIR,
+                                   processed_data_dir=TIMESERIES_DATA_DIR,
                                    email=email)
 
 

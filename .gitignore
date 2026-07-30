@@ -33,6 +33,8 @@ data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/data/processed/.gitkeep
+!data/data/processed/audio/.gitkeep
+!data/data/processed/timeseries/.gitkeep
 !data/examples/
 
 # PyInstaller
