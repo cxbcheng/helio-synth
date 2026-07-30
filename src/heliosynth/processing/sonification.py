@@ -115,3 +115,11 @@ def sonify_signal(
         max_output_samples=max_output_samples,
     )
     return normalize_peak(compressed, target_peak=target_peak)
+
+
+def audio_timeline(audio: np.ndarray, fs: float) -> np.ndarray:
+    """
+    Playback timestamps (seconds) for a uniformly-sampled audio array at `fs` Hz.
+    Used to plot playback time and audio signal.
+    """
+    return np.arange(len(audio), dtype=np.float64) / fs
