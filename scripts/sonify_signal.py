@@ -1,17 +1,21 @@
 """
-TODO: DOCUMENTATION
-Plots a Doppler velocity time series from HMI observations
-as a signal with a bandpass filter applied.
-The default filter settings are [1 mHz, 5 mHz] in order
-to (1) detrend the satellite orbit velocity (which orbits
-once every 24 hours, so an oscillation of 0.012 mHz)
-and to isolate the Sun's 5-minute oscillations (~3 mHz).
-Filtering closer to this frequency will make this frequency more prevalent.
+Plots a bandpass-filtered HMI Doppler velocity time series and generates
+a sonified version of the filtered signal.
 
-By default, this script uses the cached dataset for
-2020-01-01 to 2020-01-08 at the center of the solar disk
-(x=256, y=256). If the required FITS files are not present,
-you will be prompted to download them.
+This script demonstrates the complete sonification pipeline:
+
+    HMI Doppler velocities
+        - interpolate short gaps
+        - bandpass filter
+        - taper missing segments
+        - time-compress and pitch-shift
+        - save as WAV
+        - visualize waveform and frequency spectrum
+
+The default bandpass of [1, 5] mHz removes the dominant long-period
+spacecraft orbital trend (~24-hour period, ≈0.012 mHz) while isolating
+the Sun's 5-minute p-mode oscillations (~3 mHz). Narrower passbands
+emphasize oscillations near the selected frequencies.
 """
 import numpy as np
 from matplotlib import pyplot as plt
