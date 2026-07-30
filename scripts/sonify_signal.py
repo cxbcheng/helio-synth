@@ -13,9 +13,12 @@ This script demonstrates the complete sonification pipeline:
         - visualize waveform and frequency spectrum
 
 The default bandpass of [1, 5] mHz removes the dominant long-period
-spacecraft orbital trend (~24-hour period, ≈0.012 mHz) while isolating
+spacecraft orbital trend (~24-hour period = 0.012 mHz) while isolating
 the Sun's 5-minute p-mode oscillations (~3 mHz). Narrower passbands
 emphasize oscillations near the selected frequencies.
+
+For more information on the bandpass filter, see
+scripts/plot_signal_bandpass.py.
 """
 import numpy as np
 from matplotlib import pyplot as plt
