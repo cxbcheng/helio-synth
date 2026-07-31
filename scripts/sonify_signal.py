@@ -49,7 +49,7 @@ def main():
 
     # Audio parameters
     sample_rate = 8000
-    audio_path = AUDIO_DATA_DIR / 'solar_velocity.wav'
+    audio_path = AUDIO_DATA_DIR / 'solar_audio.wav'
 
     # Load velocity time series
     times, velocities = run_ingest(start_time=start_time, end_time=end_time, x=x, y=y,
@@ -62,7 +62,7 @@ def main():
     audio = sonify_signal(velocities, f_orig=1/45, f_target=sample_rate, alpha=alpha)
 
     print(f"Downloading signal audio to {audio_path}...")
-    sf.write(AUDIO_DATA_DIR / 'solar_audio.wav', audio, sample_rate)
+    sf.write(audio_path, audio, sample_rate)
 
     times = audio_timeline(audio, sample_rate)
 
