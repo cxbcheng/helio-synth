@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 from astropy.time import Time
 
@@ -36,7 +37,7 @@ def time_to_jsoc_str(time: Time) -> str:
     return f"{time.strftime('%Y.%m.%d_%H:%M:%S')}_TAI"
 
 
-def get_data_dir_name(scale: float, cadence: int, product: str = 'hmi.v_45s') -> str:
+def get_dataset_dir_name(scale: float, cadence: int, product: str = 'hmi.v_45s') -> str:
     """
     Directory name for a raw dataset variant, identified by product,
     download scale, and cadence.
@@ -47,9 +48,9 @@ def get_data_dir_name(scale: float, cadence: int, product: str = 'hmi.v_45s') ->
 
     Examples:
 
-    >>> get_data_dir_name(0.125, 45)
+    >>> get_dataset_dir_name(0.125, 45)
     'hmi.v_45s.scale0.125_cadence45s'
-    >>> get_data_dir_name(1.0, 90)
+    >>> get_dataset_dir_name(1.0, 90)
     'hmi.v_45s.scale1_cadence90s'
     """
     return f"{product}.scale{scale:g}_cadence{cadence}s"
@@ -85,3 +86,17 @@ def get_fits_name(time: Time, prefix: str = 'hmi.v_45s', suffix: str = '2.Dopple
     clean_prefix = prefix.rstrip('.')
     clean_suffix = suffix.lstrip('.')
     return f"{clean_prefix}.{timestamp}.{clean_suffix}"
+
+
+def get_dataset_dir(raw_data_dir: str | Path, scale: float, cadence: int, product: str = 'hmi.v_45s') -> Path:
+    """
+    See `get_dataset_dir_name` for details.
+    """
+    return Path(raw_data_dir) / get_dataset_dir_name(scale=scale, cadence=cadence, product=product)
+
+
+def get_fits_dir(raw_data_dir: str | Path, time: Time, prefix: str = 'hmi.v_45s', suffix: str = '2.Dopplergram.fits') -> Path:
+    """
+    See `get_fits_name` for details.
+    """
+    return Path(raw_data_dir) / get_fits_name(time=time, prefix=prefix, suffix=suffix)
