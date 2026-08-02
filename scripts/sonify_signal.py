@@ -21,11 +21,12 @@ For more information on the bandpass filter, see
 scripts/plot_signal_bandpass.py.
 """
 import numpy as np
+from astropy.time import Time
 from matplotlib import pyplot as plt
 import soundfile as sf
 from scipy.fft import rfft, rfftfreq
 
-from heliosynth.data_ingest.ingest import run_ingest
+from heliosynth.data_ingest.ingest import get_velocity_timeseries
 from heliosynth.paths import EXAMPLE_DATA_DIR, AUDIO_DATA_DIR
 from heliosynth.processing.cleaning import interpolate_short_gaps, zero_fill_with_taper
 from heliosynth.processing.filter import filter_segments
@@ -34,8 +35,8 @@ from heliosynth.processing.sonification import sonify_signal, audio_timeline
 
 def main():
     # Change parameters here to test different regions/timeframes
-    start_time = "2020.01.01_00:00:00_TAI"
-    end_time = "2020.01.08_00:00:00_TAI"
+    start_time = Time('2020-01-01 00:00:00', scale='tai')
+    end_time = Time('2020-01-08 00:00:00', scale='tai')
     x = 256
     y = 256
     # Bandpass filter parameters; 5-minute oscillations = ~3 mHz
@@ -52,8 +53,12 @@ def main():
     audio_path = AUDIO_DATA_DIR / 'solar_audio.wav'
 
     # Load velocity time series
-    times, velocities = run_ingest(start_time=start_time, end_time=end_time, x=x, y=y,
-                                   processed_data_dir=EXAMPLE_DATA_DIR)
+    times, velocities = get_velocity_timeseries(
+        start_time=start_time,
+        end_time=end_time,
+        x=x,
+        y=y,
+        timeseries_data_dir=EXAMPLE_DATA_DIR)
     elapsed = (times - times[0]).sec
 
     velocities = interpolate_short_gaps(velocities, max_gap=3)

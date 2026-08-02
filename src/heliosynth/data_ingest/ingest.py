@@ -52,6 +52,7 @@ def get_velocity_timeseries(
         matching processed cache exists (existing raw files are still reused).
     :param download_missing: If set to `True`, looks for missing data in
         the raw data directory and downloads it (via `download_missing_fits`).
+        Set to `False` to prevent external JSOC downloads.
     :return: (times, velocities). Velocity unit: m/s.
     """
     require_tai(start_time)
@@ -74,7 +75,6 @@ def get_velocity_timeseries(
     logger.info('%s', timeseries_cache_file)
 
     if timeseries_cache_file.exists() and not force_recompute:
-        logger.info("Loading cached velocity timeseries from %s", timeseries_cache_file)
         return load_timeseries_npz(timeseries_cache_file)
 
     logger.info("Extracting velocity timeseries for (x=%d, y=%d)...", x, y)
@@ -107,16 +107,16 @@ def download_missing_fits(
     from previously-downloaded data downloads only that range, never the
     span between them.
     """
-    raw_data_dir = get_dataset_dir(raw_data_dir, scale, cadence)
+    dataset_dir = get_dataset_dir(raw_data_dir=raw_data_dir, scale=scale, cadence=cadence)
     gaps = missing_subranges(
-        raw_dir=raw_data_dir,
+        dataset_dir=dataset_dir,
         requested_start=start_time,
         requested_end=end_time,
         cadence=cadence,
         gap_tolerance=gap_tolerance)
 
     if len(gaps) == 0:
-        logger.info("No missing sub-ranges found in %s", raw_data_dir)
+        logger.info("No missing sub-ranges found in %s", dataset_dir)
 
     for gap_start, gap_end in gaps:
         logger.info("Downloading missing range %s to %s", gap_start.isot, gap_end.isot)

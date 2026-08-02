@@ -7,7 +7,7 @@ import pandas as pd
 from astropy.time import Time
 from dotenv import load_dotenv
 
-from heliosynth.data_ingest.utils import get_dataset_dir_name, get_dataset_dir, time_to_jsoc_str
+from heliosynth.data_ingest.utils import get_dataset_dir, time_to_jsoc_str
 from heliosynth.time_utils import require_tai
 
 logger = logging.getLogger(__name__)
@@ -39,15 +39,20 @@ def download_dopplergram_fits(
     request_id: str | None = None,
 ) -> Path:
     """
-    Submits an export request to JSOC and downloads FITS files to download_dir based on
-    the given parameters.
+    Submits an export request to JSOC and downloads FITS files under
+    the directory {raw_data_dir}/hmi.45s.scale{scale}_cadence{cadence}s
+    based on the given parameters.
+
     The FITS files are selected from a time interval and processed by JSOC to compress
     the files by a scale factor 'scale' through boxcar averaging.
+
     The request is first downloaded as a tar file then extracted into FITS afterward.
+
     Notice how long these export requests take!
     Each 4096x4096 FITS image is ~18 MB, thus 1 day worth of data at full resolution is ~68 GB.
     For this reason, it is recommended to scale down (scale < 1.0) to reduce the file size
     by scale^2.
+
     Relevant processing documentation: http://jsoc.stanford.edu/doxygen_html/group__jsoc__rebin.html
     :param start_time: Open lower bound for time interval.
     :param end_time: Open upper bound for time interval.

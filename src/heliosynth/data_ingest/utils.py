@@ -82,7 +82,7 @@ def get_fits_name(time: Time, prefix: str = 'hmi.v_45s', suffix: str = '2.Dopple
     >>> get_fits_name(t)
     'hmi.v_45s.20200101_000000_TAI.2.Dopplergram.fits'
     """
-    timestamp = time_to_jsoc_str(time)
+    timestamp = time_to_fits_str(time)
     clean_prefix = prefix.rstrip('.')
     clean_suffix = suffix.lstrip('.')
     return f"{clean_prefix}.{timestamp}.{clean_suffix}"
@@ -95,11 +95,11 @@ def get_dataset_dir(raw_data_dir: str | Path, scale: float, cadence: int, produc
     return Path(raw_data_dir) / get_dataset_dir_name(scale=scale, cadence=cadence, product=product)
 
 
-def get_fits_dir(raw_data_dir: str | Path, time: Time, prefix: str = 'hmi.v_45s', suffix: str = '2.Dopplergram.fits') -> Path:
+def get_fits_path(dataset_dir: str | Path, time: Time, prefix: str = 'hmi.v_45s', suffix: str = '2.Dopplergram.fits') -> Path:
     """
     See `get_fits_name` for details.
     """
-    return Path(raw_data_dir) / get_fits_name(time=time, prefix=prefix, suffix=suffix)
+    return Path(dataset_dir) / get_fits_name(time=time, prefix=prefix, suffix=suffix)
 
 
 def fits_name_to_time(filename: str) -> Time:
@@ -120,18 +120,18 @@ def fits_name_to_time(filename: str) -> Time:
 
 
 def covered_intervals(
-    data_dir: Path,
+    dataset_dir: Path,
     cadence: float,
     gap_tolerance: float = 2.5
 ) -> list[tuple[Time, Time]]:
     """
-    Contiguous time intervals covered by existing FITS files in data_dir,
+    Contiguous time intervals covered by existing FITS files inside `dataset_dir`,
     determined from filenames alone (fits_name_to_time). Files separated
     by <= gap_tolerance * cadence are merged into one interval (tolerating
     the normal handful of dropped frames); larger gaps start a new,
     disjoint interval. Returns [] if raw_dir has no FITS files.
     """
-    fits_files = list(data_dir.glob('*.fits')) if data_dir.exists() else []
+    fits_files = list(dataset_dir.glob('*.fits')) if dataset_dir.exists() else []
     if not fits_files:
         return []
 
@@ -149,7 +149,7 @@ def covered_intervals(
 
 
 def missing_subranges(
-    raw_dir: Path,
+    dataset_dir: Path,
     requested_start: Time,
     requested_end: Time,
     cadence: float,
@@ -157,9 +157,10 @@ def missing_subranges(
 ) -> list[tuple[Time, Time]]:
     """
     Sub-ranges of [requested_start, requested_end] not already covered by
-    existing FITS files -- i.e. the time ranges that needs to be downloaded.
+    existing FITS files from `dataset_dir` -- i.e. the time ranges that
+    need to be downloaded.
     """
-    covered = covered_intervals(raw_dir, cadence, gap_tolerance)
+    covered = covered_intervals(dataset_dir, cadence, gap_tolerance)
 
     # Restrict coverage to the requested interval
     clipped = sorted(
