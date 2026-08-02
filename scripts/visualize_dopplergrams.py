@@ -33,7 +33,7 @@ def main():
     # Demo: the effect of different polynomial trend removals
     for trend_order in (None, 0, 2):
         # Load the Dopplergram as a PIL image
-        img = extract_solar_image(fits_file=fits_path, trend_order=trend_order)
+        img = extract_solar_image(fits_file=fits_path, detrend_order=trend_order)
 
         # We can plot the PIL images easily
         plt.figure(figsize=(6, 6))
