@@ -6,6 +6,7 @@ from astropy.io import fits
 from astropy.time import Time, TimeDelta
 
 from heliosynth.processing.imaging import detrend_disk_surface, render_dopplergram
+from heliosynth.time_utils import require_tai
 
 
 def extract_velocity_timeseries(
@@ -79,6 +80,7 @@ def _align_to_cadence(
     :param cadence: Grid spacing in seconds.
     :return: (grid_times, grid_velocities), uniformly spaced at `cadence`.
     """
+    require_tai(times)
     t0 = times[0]
 
     # Seconds since the first sample for each observation

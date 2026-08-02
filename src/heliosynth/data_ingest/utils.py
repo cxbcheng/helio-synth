@@ -2,6 +2,8 @@ import re
 
 from astropy.time import Time
 
+from heliosynth.time_utils import require_tai
+
 
 @DeprecationWarning
 def clean_drms_timestamp(timestamp: str) -> str:
@@ -25,15 +27,13 @@ def make_query_name(start_time: str, end_time: str, scale: float, cadence: int) 
     return clean_drms_timestamp(f"hmi_v_45s_{start_time}_{end_time}_{scale}_{cadence}")
 
 
-def time_to_jsoc_str(t: Time) -> str:
+def time_to_jsoc_str(time: Time) -> str:
     """
     Formats a Time as a JSOC-style timestamp string, e.g. "2020.01.01_00:00:00_TAI".
     Used to build DRMS query strings such as "hmi.v_45s[{start}-{end}@{cadence}s]".
-    :raises ValueError: if t.scale is not 'tai'.
     """
-    if t.scale != 'tai':
-        raise ValueError('Time scale must be "tai"')
-    return f"{t.strftime('%Y.%m.%d_%H:%M:%S')}_TAI"
+    require_tai(time)
+    return f"{time.strftime('%Y.%m.%d_%H:%M:%S')}_TAI"
 
 
 def get_data_dir_name(scale: float, cadence: int, product: str = 'hmi.v_45s') -> str:
@@ -62,15 +62,12 @@ def time_to_fits_str(time: Time) -> str:
     (contrast with time_to_jsoc_str, which uses the query-string format
     with "." and ":" separators, e.g. "2020.01.01_00:00:00_TAI").
 
-    :raises ValueError: if time.scale is not 'tai'.
-
     Examples:
 
     >>> time_to_fits_str(Time('2020-01-01T00:00:00', scale='tai'))
     '20200101_000000_TAI'
     """
-    if time.scale != 'tai':
-        raise ValueError('Time scale must be "tai"')
+    require_tai(time)
     return f"{time.strftime('%Y%m%d_%H%M%S')}_TAI"
 
 
