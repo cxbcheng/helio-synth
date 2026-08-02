@@ -69,15 +69,22 @@ def get_velocity_timeseries(
 
     dataset_dir = get_dataset_dir(raw_data_dir, scale, cadence)
     dataset_name = get_dataset_dir_name(scale, cadence)  # For cache file name
-    range_tag = f"{time_to_fits_str(start_time)}_{time_to_fits_str(end_time)}"
+    range_tag = f"from{time_to_fits_str(start_time)}_to{time_to_fits_str(end_time)}"
     timeseries_cache_file = Path(timeseries_data_dir) / f"{dataset_name}_x{x}_y{y}_{range_tag}.npz"
+    logger.info('%s', timeseries_cache_file)
 
     if timeseries_cache_file.exists() and not force_recompute:
         logger.info("Loading cached velocity timeseries from %s", timeseries_cache_file)
         return load_timeseries_npz(timeseries_cache_file)
 
     logger.info("Extracting velocity timeseries for (x=%d, y=%d)...", x, y)
-    times, velocities = extract_velocity_timeseries(dataset_dir, x, y, cadence)
+    times, velocities = extract_velocity_timeseries(
+        data_dir=dataset_dir,
+        x=x,
+        y=y,
+        cadence=cadence,
+        start_time=start_time,
+        end_time=end_time)
 
     Path(timeseries_data_dir).mkdir(parents=True, exist_ok=True)
     save_timeseries_npz(timeseries_cache_file, times, velocities, cadence)
@@ -101,20 +108,22 @@ def download_missing_fits(
     span between them.
     """
     raw_data_dir = get_dataset_dir(raw_data_dir, scale, cadence)
-    gaps = missing_subranges(raw_dir=raw_data_dir,
-                             requested_start=start_time,
-                             requested_end=end_time,
-                             cadence=cadence,
-                             gap_tolerance=gap_tolerance)
+    gaps = missing_subranges(
+        raw_dir=raw_data_dir,
+        requested_start=start_time,
+        requested_end=end_time,
+        cadence=cadence,
+        gap_tolerance=gap_tolerance)
 
     if len(gaps) == 0:
         logger.info("No missing sub-ranges found in %s", raw_data_dir)
 
     for gap_start, gap_end in gaps:
         logger.info("Downloading missing range %s to %s", gap_start.isot, gap_end.isot)
-        download_dopplergram_fits(start_time=gap_start,
-                                  end_time=gap_end,
-                                  raw_data_dir=raw_data_dir,
-                                  email=email,
-                                  scale=scale,
-                                  cadence=cadence)
+        download_dopplergram_fits(
+            start_time=gap_start,
+            end_time=gap_end,
+            raw_data_dir=raw_data_dir,
+            email=email,
+            scale=scale,
+            cadence=cadence)
