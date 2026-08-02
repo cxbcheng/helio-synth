@@ -100,3 +100,81 @@ def get_fits_dir(raw_data_dir: str | Path, time: Time, prefix: str = 'hmi.v_45s'
     See `get_fits_name` for details.
     """
     return Path(raw_data_dir) / get_fits_name(time=time, prefix=prefix, suffix=suffix)
+
+
+def fits_name_to_time(filename: str) -> Time:
+    """
+    Inverse of get_fits_name/time_to_fits_str: parses the observation time
+    out of a standard JSOC-convention FITS filename, e.g.
+    "hmi.v_45s.20200101_000000_TAI.2.Dopplergram.fits" -> Time for
+    2020-01-01T00:00:00 TAI.
+    :raises ValueError: if no "<YYYYMMDD>_<HHMMSS>_TAI" segment is found.
+    """
+    match = re.search(r'(\d{8})_(\d{6})_TAI', filename)
+    if not match:
+        raise ValueError(f"Could not find a JSOC-style timestamp in '{filename}'")
+    date_part, time_part = match.groups()
+    iso = (f"{date_part[0:4]}-{date_part[4:6]}-{date_part[6:8]}T"
+           f"{time_part[0:2]}:{time_part[2:4]}:{time_part[4:6]}")
+    return Time(iso, format='isot', scale='tai')
+
+
+def covered_intervals(
+    data_dir: Path,
+    cadence: float,
+    gap_tolerance: float = 2.5
+) -> list[tuple[Time, Time]]:
+    """
+    Contiguous time intervals covered by existing FITS files in data_dir,
+    determined from filenames alone (fits_name_to_time). Files separated
+    by <= gap_tolerance * cadence are merged into one interval (tolerating
+    the normal handful of dropped frames); larger gaps start a new,
+    disjoint interval. Returns [] if raw_dir has no FITS files.
+    """
+    fits_files = list(data_dir.glob('*.fits')) if data_dir.exists() else []
+    if not fits_files:
+        return []
+
+    times = sorted(fits_name_to_time(f.name) for f in fits_files)
+    intervals = []
+    seg_start = seg_end = times[0]
+    for t in times[1:]:
+        if (t - seg_end).sec <= gap_tolerance * cadence:
+            seg_end = t
+        else:
+            intervals.append((seg_start, seg_end))
+            seg_start = seg_end = t
+    intervals.append((seg_start, seg_end))
+    return intervals
+
+
+def missing_subranges(
+    raw_dir: Path,
+    requested_start: Time,
+    requested_end: Time,
+    cadence: float,
+    gap_tolerance: float = 2.5,
+) -> list[tuple[Time, Time]]:
+    """
+    Sub-ranges of [requested_start, requested_end] not already covered by
+    existing FITS files -- i.e. the time ranges that needs to be downloaded.
+    """
+    covered = covered_intervals(raw_dir, cadence, gap_tolerance)
+
+    # Restrict coverage to the requested interval
+    clipped = sorted(
+        (max(s, requested_start), min(e, requested_end))
+        for s, e in covered
+        if s < requested_end and e > requested_start
+    )
+
+    missing = []
+
+    cursor = requested_start
+    for s, e in clipped:
+        if s > cursor:
+            missing.append((cursor, s))
+        cursor = max(cursor, e)
+    if cursor < requested_end:
+        missing.append((cursor, requested_end))
+    return missing

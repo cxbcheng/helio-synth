@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -6,77 +7,63 @@ from astropy.time import Time
 from heliosynth.data_ingest.client import download_dopplergram_fits
 from heliosynth.data_ingest.extraction import extract_velocity_timeseries
 from heliosynth.data_ingest.storage import load_timeseries_npz, save_timeseries_npz
-from heliosynth.data_ingest.utils import make_query_name
+from heliosynth.data_ingest.utils import make_query_name, get_dataset_dir_name
 from heliosynth.paths import RAW_DATA_DIR, TIMESERIES_DATA_DIR
+from heliosynth.time_utils import require_tai
+
+logger = logging.getLogger(__name__)
 
 
-def run_ingest(
-        start_time: str = "2020.01.01_00:00:00_TAI",
-        end_time: str = "2020.01.08_00:00:00_TAI",
+def get_velocity_timeseries(
+        start_time: Time,
+        end_time: Time,
+        x: int,
+        y: int,
         scale: float = 0.125,
         cadence: int = 45,
-        x: int = 256,
-        y: int = 256,
         raw_data_dir: str | Path = RAW_DATA_DIR,
-        processed_data_dir: str | Path = TIMESERIES_DATA_DIR,
-        prompt_download: bool = True,
+        timeseries_data_dir: str | Path = TIMESERIES_DATA_DIR,
         email: str | None = None,
+        force_recompute: bool = False,
 ) -> tuple[Time, np.ndarray]:
     """
-    Downloads (if necessary), extracts, caches, and returns a Doppler velocity
-    time series for a specified spatial location and time range.
-    Note that the time format should fit "2020.01.01_00:00:00_TAI", i.e. a period to
-    delimit the date, an underscore between the date and time, and a suffix _TAI.
-    This directly matches the DRMS query time parameter format, and it will also be used
-    (although in a cleaner format determined by `make_query_name`) to look up from or
-    download into the raw data folder.
+    Returns a Doppler velocity time series for a pixel coordinate and time
+    range, downloading and/or extracting as needed, and caching the result.
 
-    :param start_time: Start of the DRMS query time range.
-    :param end_time: End of the DRMS query time range.
-    :param scale: Spatial downsampling factor used when downloading FITS files.
-    :param cadence: Temporal cadence of the Dopplergrams, in seconds.
-    :param x: Horizontal pixel coordinate of the extracted time series.
-    :param y: Vertical pixel coordinate of the extracted time series.
-    :param raw_data_dir: Directory containing cached raw FITS files.
-    :param processed_data_dir: Directory containing cached processed time series.
-    :param prompt_download: Whether to prompt the user before downloading.
-    :param email: Registered JSOC email to download from if needed. Leave blank
-        if this is already provided as `JSOC_EMAIL` in `.env`.
-    :return: (times, velocities). Velocity unit: m/s
+    Convenience orchestrator over download_dopplergram_fits,
+    extract_velocity_timeseries, and storage.*_npz; call those directly
+    for finer control.
+
+    :param start_time: Start of the time range (TAI scale).
+    :param end_time: End of the time range (TAI scale).
+    :param x: Horizontal pixel coordinate.
+    :param y: Vertical pixel coordinate.
+    :param scale: Spatial downsampling factor for raw FITS downloads.
+    :param cadence: Temporal cadence, in seconds.
+    :param raw_data_dir: Root directory for raw FITS downloads/cache.
+    :param timeseries_data_dir: Root directory for cached extracted timeseries.
+    :param email: Registered JSOC email; falls back to JSOC_EMAIL in .env.
+    :param force_recompute: If True, re-extract from raw FITS even if a
+        matching processed cache exists (existing raw files are still reused).
+    :return: (times, velocities). Velocity unit: m/s.
     """
-    # Get directory for the particular data given
-    query_folder_name = make_query_name(start_time=start_time, end_time=end_time, scale=scale, cadence=cadence)
-    raw_cache_dir = raw_data_dir / query_folder_name
-    existing_fits = list(raw_cache_dir.glob("*.fits")) if raw_cache_dir.exists() else []
+    require_tai(start_time)
+    require_tai(end_time)
 
-    if not existing_fits:
-        if prompt_download:
-            res = input(f"Cannot find existing FITS files for the directory {raw_cache_dir.absolute()}.\nDownload? (y/n)")
-            if res.lower() != 'y':
-                print("Exiting...")
-                raise SystemExit()
+    raw_cache_dir = _ensure_raw_data(start_time, end_time, scale, cadence,
+                                     Path(raw_data_dir), email)
 
-        download_dopplergram_fits(
-            start_time=start_time,
-            end_time=end_time,
-            scale=scale,
-            cadence=cadence,
-            download_dir=raw_cache_dir,
-            email=email,
-        )
-    else:
-        print(f"Found {len(existing_fits)} FITS files for the directory {raw_cache_dir}.")
+    dataset_name = get_dataset_dir_name(scale, cadence)
+    range_tag = f"{time_to_fits_str(start_time)}_{time_to_fits_str(end_time)}"
+    processed_cache_file = Path(timeseries_data_dir) / f"{dataset_name}_x{x}_y{y}_{range_tag}.npz"
 
-    # Check processed cache to see if times, velocities NumPy arrays have already been stored
-    processed_cache_file = processed_data_dir / f"{query_folder_name}_x{x}_y{y}.npz"
+    if processed_cache_file.exists() and not force_recompute:
+        logger.info("Loading cached velocity timeseries from %s", processed_cache_file)
+        return load_timeseries_npz(processed_cache_file)
 
-    if processed_cache_file.exists():
-        print(f"Getting velocity timeseries from {processed_cache_file}")
-        times, velocities = load_timeseries_npz(path=processed_cache_file)
-    else:
-        print(f"Extracting velocity timeseries...")
-        times, velocities = extract_velocity_timeseries(data_dir=raw_cache_dir, x=x, y=y, cadence=cadence)
-        print(f"Saving velocity timeseries to {processed_cache_file}")
-        save_timeseries_npz(path=processed_cache_file, times=times, velocities=velocities, cadence=cadence)
+    logger.info("Extracting velocity timeseries for (x=%d, y=%d)...", x, y)
+    times, velocities = extract_velocity_timeseries(raw_cache_dir, x, y, cadence)
 
+    Path(timeseries_data_dir).mkdir(parents=True, exist_ok=True)
+    save_timeseries_npz(processed_cache_file, times, velocities, cadence)
     return times, velocities
