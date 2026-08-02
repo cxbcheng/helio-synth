@@ -5,7 +5,7 @@ from PIL import Image
 from astropy.io import fits
 from astropy.time import Time, TimeDelta
 
-from heliosynth.processing.imaging import remove_low_order_trend, render_dopplergram
+from heliosynth.processing.imaging import detrend_disk_surface, render_dopplergram
 
 
 def extract_velocity_timeseries(
@@ -138,16 +138,28 @@ def load_dopplergram(fits_file: Path) -> tuple[np.ndarray, np.ndarray]:
 
 def extract_solar_image(fits_file: Path, out_size: int | None = None,
                         v_min: float = -3000, v_max: float = 3000,
-                        trend_order: int | None = 2) -> Image.Image:
+                        detrend_order: int | None = 2) -> Image.Image:
     """
     Convenience wrapper to load, clean, and render a single FITS file.
     Returns a PIL Image representing a diverging color colormap of the solar image.
-    For extended documentation, see `load_dopplergram`, `remove_low_order_trend`,
+    For extended documentation, see `load_dopplergram`, `detrend_disk_surface`,
     and `render_dopplergram`.
-    If `trend_order` is set to None, then no trend order removal is performed
-    and the raw Dopplergram image is returned.
+
+    The velocity values `v_min` and `v_max` should be set to the minimum and maximum
+    of the signal over the sampling duration. These parameters are used to set the
+    red and blue cutoffs for the colormap.
+
+    If `detrend_order` is set to None, then the data is not detrended
+    and a colormap of the raw Dopplergram image is returned.
+
+    :param fits_file: Path to FITS file
+    :param out_size: Size of output image
+    :param v_min: Minimum velocity value (in m/s)
+    :param v_max: Maximum velocity value (in m/s)
+    :param detrend_order: Polynomial order used to detrend the surface.
+        If set to `None`, the data is not detrended.
     """
     velocity, disk_mask = load_dopplergram(fits_file)
-    if trend_order is not None:
-        velocity = remove_low_order_trend(velocity, disk_mask, trend_order)
+    if detrend_order is not None:
+        velocity = detrend_disk_surface(velocity, disk_mask, detrend_order)
     return render_dopplergram(velocity, disk_mask, v_min=v_min, v_max=v_max, out_size=out_size)
