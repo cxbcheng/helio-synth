@@ -1,9 +1,17 @@
+import logging
 import os
 import tarfile
 from pathlib import Path
 import drms
 import pandas as pd
+from astropy.time import Time
 from dotenv import load_dotenv
+
+from heliosynth.data_ingest.utils import get_dataset_dir, time_to_jsoc_str
+from heliosynth.time_utils import require_tai
+
+logger = logging.getLogger(__name__)
+
 
 def get_drms_client(email: str | None = None) -> drms.Client:
     """
@@ -19,29 +27,36 @@ def get_drms_client(email: str | None = None) -> drms.Client:
     client = drms.Client(email=email)
     return client
 
+
 def download_dopplergram_fits(
-    start_time: str,
-    end_time: str,
-    download_dir: str | Path,
+    start_time: Time,
+    end_time: Time,
+    raw_data_dir: str | Path,
     email: str | None = None,
     scale: float = 1.0,
     cadence: int = 45,
     poll_interval: int | None = 10,
+    request_id: str | None = None,
 ) -> Path:
     """
-    Submits an export request to JSOC and downloads FITS files to download_dir based on
-    the given parameters.
+    Submits an export request to JSOC and downloads FITS files under
+    the directory {raw_data_dir}/hmi.45s.scale{scale}_cadence{cadence}s
+    based on the given parameters.
+
     The FITS files are selected from a time interval and processed by JSOC to compress
     the files by a scale factor 'scale' through boxcar averaging.
+
     The request is first downloaded as a tar file then extracted into FITS afterward.
+
     Notice how long these export requests take!
     Each 4096x4096 FITS image is ~18 MB, thus 1 day worth of data at full resolution is ~68 GB.
     For this reason, it is recommended to scale down (scale < 1.0) to reduce the file size
     by scale^2.
+
     Relevant processing documentation: http://jsoc.stanford.edu/doxygen_html/group__jsoc__rebin.html
     :param start_time: Open lower bound for time interval.
     :param end_time: Open upper bound for time interval.
-    :param download_dir: Directory to download FITS files. If it does not exist, one will be made.
+    :param raw_data_dir: Raw data directory.
     :param email: JSOC email.
     :param scale: The number by which to scale the FITS solar disk image.
         This effectively scales the file size of the image by a factor of scale^2.
@@ -51,44 +66,58 @@ def download_dopplergram_fits(
         cadence should be a positive integer multiple of 45.
     :param poll_interval: Time in seconds between export status updates.
         If None, the JSOC server supplied value is used.
-    :return: The downloaded directory as a pathlib.Path.
+    :param request_id: An existing JSOC export request ID to resume from,
+        instead of submitting a new export request. Use this to recover
+        from an interrupted download without resubmitting an identical
+        request and re-queueing at JSOC -- the request ID is always
+        logged (see below) specifically so it's available for this.
+    :return: The directory containing downloaded FITS files, as a Path.
     """
-    # Input validation
+    require_tai(start_time)
+    require_tai(end_time)
+    if start_time >= end_time:
+        raise ValueError(f"start_time ({start_time.isot}) must be strictly before end_time ({end_time.isot})")
     if scale <= 0:
         raise ValueError("scale must be positive")
-
     if cadence <= 0 or cadence % 45 != 0:
         raise ValueError("cadence must be a positive multiple of 45")
 
     client = get_drms_client(email)
-    target_dir = Path(download_dir)
+    target_dir = get_dataset_dir(raw_data_dir=raw_data_dir, scale=scale, cadence=cadence)
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    # Create the query
-    qstr = f"hmi.v_45s[{start_time}-{end_time}@{cadence}s]{{image}}"
+    if request_id is not None:
+        logger.info("Resuming export request '%s'...", request_id)
+        result = client.export_from_id(request_id)
+    else:
+        start_time_str = time_to_jsoc_str(start_time)
+        end_time_str = time_to_jsoc_str(end_time)
+        qstr = f"hmi.v_45s[{start_time_str}-{end_time_str}@{cadence}s]{{image}}"
+        process = {'rebin': {'scale': scale, 'method': 'boxcar'}}
+        logger.info("Submitting export request for '%s'...", qstr)
+        result = client.export(qstr, method='url-tar', protocol='fits', process=process)
 
-    # Processing parameters to reduce the image size
-    # http://jsoc.stanford.edu/doxygen_html/group__jsoc__rebin.html
-    process = {
-        'rebin': {
-            'scale': scale,
-            'method': 'boxcar',
-        }
-    }
+    # Logs immediately before the request can fail
+    logger.info(
+        "Request ID: %s (pass as request_id=%r to resume if interrupted)",
+        result.id, result.id,
+    )
 
-    print(f"Submitting export request for '{qstr}'...")
-    result = client.export(qstr, method='url-tar', protocol='fits', process=process)
     result.wait(sleep=poll_interval)
 
-    print(f"Request URL: {result.request_url}")
-    print(f"Downloading {len(result.urls)} file(s) to '{target_dir}'...")
+    logger.info("Request URL: %s", result.request_url)
+    logger.info("Downloading %d file(s) to '%s'...", len(result.urls), target_dir)
     tars = result.download(str(target_dir))
 
     failed = _extract_tars(tars, target_dir)
     if failed:
-        print(f"Warning: {len(failed)} archive(s) failed to extract: {', '.join(failed)}")
+        logger.warning(
+            "%d archive(s) failed to extract: %s. Re-run with "
+            "request_id=%r to retry the download without resubmitting.",
+            len(failed), ', '.join(failed), result.id,
+        )
 
-    print(f"Download completed. {len(list(target_dir.glob('*.fits')))} file(s) ready.")
+    logger.info("Download completed. %d file(s) ready.", len(list(target_dir.glob('*.fits'))))
     return target_dir
 
 
@@ -97,45 +126,66 @@ def _extract_tars(tars: pd.DataFrame, target_dir: Path) -> list[str]:
     Extract all downloaded TAR archives into target_dir and remove the
     archives on success.
 
+    Also detects and removes stray ``*.tar.part`` files -- leftover
+    partial downloads from a previous interrupted run.
+
     :param tars: The DataFrame returned by drms.ExportRequest.download(),
         expected to have a 'download' column of local file paths (NaN for
         entries that failed to download).
     :param target_dir: Directory containing the downloaded tar files and
         where their contents will be extracted.
-    :return: List of tar filenames that failed to extract (empty if all
-        succeeded).
+    :return: List of tar filenames that failed to extract or were found
+        incomplete (empty if all succeeded).
     """
     failed: list[str] = []
 
+    stray_parts = list(target_dir.glob('*.tar.part'))
+    if stray_parts:
+        logger.warning(
+            "%d incomplete download(s) (*.tar.part) found in %s -- "
+            "leftover from an interrupted download. Removing them; the "
+            "corresponding file(s) will be re-downloaded on retry.",
+            len(stray_parts), target_dir,
+        )
+        for part in stray_parts:
+            try:
+                part.unlink()
+            except OSError as e:
+                logger.warning("Could not remove stray partial file %s: %s", part.name, e)
+            failed.append(part.name)
+
     missing = tars['download'].isna().sum()
     if missing:
-        print(f"Warning: {missing} file(s) failed to download and will be skipped.")
+        logger.warning("%d file(s) failed to download and will be skipped.", missing)
 
     for tar_path_str in tars['download'].dropna():
         tar_path = Path(tar_path_str)
 
         if not tar_path.is_file():
-            print(f"Skipping {tar_path.name}: file not found.")
+            logger.warning(
+                "Skipping %s: file not found (may indicate an interrupted "
+                "download not caught above).", tar_path.name,
+            )
             failed.append(tar_path.name)
             continue
 
         if not tarfile.is_tarfile(tar_path):
-            print(f"Skipping {tar_path.name}: not a valid tar file.")
+            logger.warning("Skipping %s: not a valid tar file.", tar_path.name)
             failed.append(tar_path.name)
             continue
 
         try:
-            print(f"Extracting {tar_path.name}...")
+            logger.info("Extracting %s...", tar_path.name)
             with tarfile.open(tar_path, 'r') as tar:
                 tar.extractall(path=target_dir, filter='data')
         except (tarfile.TarError, OSError) as e:
-            print(f"Error extracting {tar_path.name}: {e}")
+            logger.warning("Error extracting %s: %s", tar_path.name, e)
             failed.append(tar_path.name)
             continue
 
         try:
             tar_path.unlink()
         except OSError:
-            print(f"Could not remove {tar_path.name}")
+            logger.warning("Could not remove %s", tar_path.name)
 
     return failed

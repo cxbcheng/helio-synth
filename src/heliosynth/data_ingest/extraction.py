@@ -5,16 +5,15 @@ from PIL import Image
 from astropy.io import fits
 from astropy.time import Time, TimeDelta
 
+from heliosynth.data_ingest.utils import fits_name_to_time
 from heliosynth.processing.imaging import detrend_disk_surface, render_dopplergram
+from heliosynth.time_utils import require_tai
 
 
 def extract_velocity_timeseries(
-        data_dir: str | Path,
-        x: int,
-        y: int,
-        cadence: int,
-        start_index: int | None = None,
-        end_index: int | None = None,
+        data_dir: str | Path, x: int, y: int, cadence: int,
+        start_time: Time | None = None,
+        end_time: Time | None = None,
 ) -> tuple[Time, np.ndarray]:
     """
     Parses local FITS files in the provided directory and extracts a velocity timeseries
@@ -29,17 +28,25 @@ def extract_velocity_timeseries(
     :param cadence: The expected time step or sampling interval (seconds) between any two
         data points. The time of the image is cross-validated with the cadence to mark
         any missing data with NaNs.
-    :param start_index: First file index to process (inclusive).
-    :param end_index: Last file index to process (exclusive).
+    :param start_time: If given, only files at or after this time are
+        processed -- filtered from filenames before any FITS file is opened.
+    :param end_time: If given, only files at or before this time are processed.
     :return: (times, velocities). A uniform-cadence timeseries. Velocity unit: m/s.
         velocities[i] is NaN whenever no valid sample was found for that time slot.
     :raises ValueError: if (x, y) is out of bounds, or no valid samples are found.
     """
     target_dir = Path(data_dir)
-    fits_files = sorted(list(target_dir.glob('*.fits')))[start_index:end_index]
+    fits_files = sorted(target_dir.glob('*.fits'))
 
     t_recs = []
     velocities = []
+
+    if start_time is not None or end_time is not None:
+        fits_files = [
+            f for f in fits_files
+            if (start_time is None or fits_name_to_time(f.name) >= start_time)
+               and (end_time is None or fits_name_to_time(f.name) <= end_time)
+        ]
 
     for fits_file in fits_files:
         try:
@@ -79,6 +86,7 @@ def _align_to_cadence(
     :param cadence: Grid spacing in seconds.
     :return: (grid_times, grid_velocities), uniformly spaced at `cadence`.
     """
+    require_tai(times)
     t0 = times[0]
 
     # Seconds since the first sample for each observation

@@ -19,16 +19,18 @@ Plots three Dopplergrams:
    large-scale velocity field and revealing smaller-scale features,
    including granulation and p-mode oscillations.
 """
-
+from astropy.time import Time
 from matplotlib import pyplot as plt
 
 from heliosynth.data_ingest.extraction import extract_solar_image
+from heliosynth.data_ingest.utils import get_fits_path
 from heliosynth.paths import EXAMPLE_DATA_DIR
 
 
 def main():
-    # Here is a pre-downloaded FITS file for convenience
-    fits_path = EXAMPLE_DATA_DIR / 'hmi.v_45s.20200101_000000_TAI.2.Dopplergram.fits'
+    # Here is a pre-downloaded FITS file from `data/examples` for convenience
+    time = Time('2020-01-01 00:00:00', scale='tai')
+    fits_path = get_fits_path(dataset_dir=EXAMPLE_DATA_DIR, time=time)
 
     # Demo: the effect of different polynomial trend removals
     for trend_order in (None, 0, 2):
@@ -46,7 +48,7 @@ def main():
         else:
             plt.title("Detrended Dopplergram\n(Trend Order = 2: Large-Scale Velocity Removed)")
 
-        plt.xlabel("January 1st, 2020 (00:00:00)")
+        plt.xlabel(time.iso)
         plt.xticks([])
         plt.yticks([])
         plt.tight_layout()

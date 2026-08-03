@@ -12,10 +12,10 @@ By default, this script uses the cached dataset for
 (x=256, y=256). If the required FITS files are not present,
 you will be prompted to download them.
 """
-
+from astropy.time import Time
 from matplotlib import pyplot as plt
 
-from heliosynth.data_ingest.ingest import run_ingest
+from heliosynth.data_ingest.ingest import get_velocity_timeseries
 from heliosynth.paths import EXAMPLE_DATA_DIR
 from heliosynth.processing.cleaning import interpolate_short_gaps, zero_fill_with_taper
 from heliosynth.processing.filter import filter_segments
@@ -23,8 +23,8 @@ from heliosynth.processing.filter import filter_segments
 
 def main():
     # Change parameters here to test different regions/timeframes
-    start_time = "2020.01.01_00:00:00_TAI"
-    end_time = "2020.01.08_00:00:00_TAI"
+    start_time = Time('2020-01-01 00:00:00', scale='tai')
+    end_time = Time('2020-01-08 00:00:00', scale='tai')
     x = 256
     y = 256
     # Bandpass filter parameters; 5-minute oscillations = ~3 mHz
@@ -32,12 +32,16 @@ def main():
     high_cutoff = 0.005  # 5 mHz
 
     # Matplotlib plot parameters
-    plt_x_start = 3840
+    plt_x_start = 0
     plt_x_end = plt_x_start + 3600  # 60 minute duration
 
     # Load velocity time series
-    times, velocities = run_ingest(start_time=start_time, end_time=end_time, x=x, y=y,
-                                   processed_data_dir=EXAMPLE_DATA_DIR)
+    times, velocities = get_velocity_timeseries(
+        start_time=start_time,
+        end_time=end_time,
+        x=x,
+        y=y,
+        timeseries_data_dir=EXAMPLE_DATA_DIR)
     elapsed = (times - times[0]).sec
 
     velocities = interpolate_short_gaps(velocities, max_gap=3)
@@ -46,7 +50,7 @@ def main():
 
     plt.figure()
     plt.plot(elapsed, velocities)
-    plt.xlabel('Time since 2020-01-01 00:00:00 [s]')
+    plt.xlabel(f'Time since {start_time.iso} [s]')
     plt.ylabel('Doppler Velocity [m/s]')
     plt.title('Filtered Signal at the Center of the Solar Disk')
     plt.xlim(plt_x_start, plt_x_end)
