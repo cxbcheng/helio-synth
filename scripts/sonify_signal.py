@@ -83,8 +83,7 @@ def main():
     ax1.plot(audio, color='steelblue', lw=0.5)
     ax1.set_xlabel('Audio Playback Time')
     ax1.set_ylabel('Audio Amplitude')
-    ax1.set_title(f"Sonified Audio Waveform "
-              f"({alpha * sample_rate}x Playback Speed)")
+    ax1.set_title(f"Sonified Audio Waveform ({alpha}x Playback Speed)")
     ax1.grid(True)
 
     # Frequency spectrum plot
