@@ -38,7 +38,7 @@ def extract_velocity_timeseries(
     :raises ValueError: if (x, y) is out of bounds, or no valid samples are found.
     """
     target_dir = Path(data_dir)
-    fits_files = get_fits_files(start_time, end_time, target_dir)
+    fits_files = get_fits_files(target_dir, start_time, end_time)
 
     t_recs = []
     velocities = []
@@ -65,9 +65,9 @@ def extract_velocity_timeseries(
 
 
 def get_fits_files(
+        dataset_dir: Path,
         start_time: Time | None = None,
-        end_time: Time | None = None,
-        dataset_dir: Path = RAW_DATA_DIR
+        end_time: Time | None = None
 ) -> list[Path]:
     """
     Gets a list of the FITS files directly under a directory.
