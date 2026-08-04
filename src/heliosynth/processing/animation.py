@@ -23,7 +23,6 @@ def get_animation_timestamps(
     return start_time + TimeDelta(np.arange(n_frames) * step, format='sec')
 
 
-
 def snap_to_available(times: Time, available: Time) -> tuple[Time, np.ndarray]:
     """
     Snaps each time in `times` to the nearest timestamp in `available`.
