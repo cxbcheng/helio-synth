@@ -3,9 +3,11 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 from astropy.io import fits
+from astropy.io.fits import HDUList
 from astropy.time import Time, TimeDelta
 
 from heliosynth.data_ingest.utils import fits_name_to_time
+from heliosynth.paths import RAW_DATA_DIR
 from heliosynth.processing.imaging import detrend_disk_surface, render_dopplergram
 from heliosynth.time_utils import require_tai
 
@@ -36,17 +38,10 @@ def extract_velocity_timeseries(
     :raises ValueError: if (x, y) is out of bounds, or no valid samples are found.
     """
     target_dir = Path(data_dir)
-    fits_files = sorted(target_dir.glob('*.fits'))
+    fits_files = get_fits_files(start_time, end_time, target_dir)
 
     t_recs = []
     velocities = []
-
-    if start_time is not None or end_time is not None:
-        fits_files = [
-            f for f in fits_files
-            if (start_time is None or fits_name_to_time(f.name) >= start_time)
-               and (end_time is None or fits_name_to_time(f.name) <= end_time)
-        ]
 
     for fits_file in fits_files:
         try:
@@ -67,6 +62,28 @@ def extract_velocity_timeseries(
     velocities = np.array(velocities, dtype=np.float32)[order]
 
     return _align_to_cadence(times, velocities, cadence)
+
+
+def get_fits_files(
+        start_time: Time | None = None,
+        end_time: Time | None = None,
+        dataset_dir: Path = RAW_DATA_DIR
+) -> list[Path]:
+    """
+    Gets a list of the FITS files directly under a directory.
+    :param start_time: If given, only files at or after this time are processed.
+    :param end_time: If given, only files at or before this time are processed.
+    :param dataset_dir: Directory containing FITS files.
+    """
+    fits_files = sorted(dataset_dir.glob('*.fits'))
+
+    if start_time is not None or end_time is not None:
+        fits_files = [
+            f for f in fits_files
+            if (start_time is None or fits_name_to_time(f.name) >= start_time)
+               and (end_time is None or fits_name_to_time(f.name) <= end_time)
+        ]
+    return fits_files
 
 
 def _align_to_cadence(
