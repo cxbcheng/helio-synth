@@ -45,6 +45,7 @@ def main():
         im_width // 2 - sample_points[:, 1],  # row
         im_width // 2 + sample_points[:, 0],  # col
     ))
+    sample_pixels = np.clip(sample_pixels, 0, im_width - 1)
 
     # We will treat velocity as a function of sample points over time.
     # Specifically, we express the velocity series as an M x N matrix
@@ -68,7 +69,7 @@ def main():
             rendered.save(im_dir / im_filename, format='WEBP')
 
 
-    # TODO: remove debug
+    # TODO: save locally
     logger.debug(velocity_series)
 
 
