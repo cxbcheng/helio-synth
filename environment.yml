@@ -5,22 +5,15 @@ channels:
 dependencies:
   - python=3.10
   - pip
-
-  # Data Fetching & Helioseismology
   - sunpy
   - drms
   - astropy
-
-  # Signal Processing & Math
   - numpy
   - scipy
   - scikit-learn
-
-  # UI & Visualization
   - matplotlib
   - pyqt
-
-  # Audio Processing
+  - zarr
   - pip:
     - soundfile
     - pydub

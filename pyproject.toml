@@ -20,6 +20,8 @@ dependencies = [
     # UI & Visualization
     "matplotlib",
     "pyqt6",
+    # Storage
+    "zarr",
     # Audio Processing & Utilities
     "soundfile",
     "pydub",
