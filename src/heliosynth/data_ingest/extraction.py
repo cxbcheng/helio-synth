@@ -148,24 +148,23 @@ def _clean_t_rec(t_rec: str) -> str:
     return t_rec.removesuffix('_TAI').replace('.', '-', 2).replace('_', 'T')
 
 
-def load_dopplergram(fits_file: Path) -> tuple[np.ndarray, np.ndarray]:
+def read_dopplergram(fits_file: Path) -> np.ndarray:
     """
-    Loads the Dopplergram from the FITS file.
-    Returns (velocity, disk_mask) -- the 2D Doppler velocity data and a boolean on-disk mask,
-        intended to indicate where NaN/Inf values exist (due to being missing or off-disk).
+    Reads Dopplergram data from the FITS file and returns
+    the 2D Doppler velocity data (dtype=np.float32).
     """
     with fits.open(fits_file) as hdul:
-        velocity = hdul[1].data.astype(np.float32)
-        disk_mask = np.isfinite(velocity)
-
-    return velocity, disk_mask
+        return hdul[1].data.astype(np.float32)
 
 
-def extract_solar_image(fits_file: Path, out_size: int | None = None,
+def extract_solar_image(velocity: np.ndarray,
+                        disk_mask: np.ndarray | None = None,
+                        out_size: int | None = None,
                         v_min: float = -3000, v_max: float = 3000,
                         detrend_order: int | None = 2) -> Image.Image:
     """
-    Convenience wrapper to load, clean, and render a single FITS file.
+    Convenience wrapper to clean and render a single FITS file.
+
     Returns a PIL Image representing a diverging color colormap of the solar image.
     For extended documentation, see `load_dopplergram`, `detrend_disk_surface`,
     and `render_dopplergram`.
@@ -177,14 +176,25 @@ def extract_solar_image(fits_file: Path, out_size: int | None = None,
     If `detrend_order` is set to None, then the data is not detrended
     and a colormap of the raw Dopplergram image is returned.
 
-    :param fits_file: Path to FITS file
+    :param velocity: Velocity data from the image data of a FITS file
+    :param disk_mask: Boolean on-disk mask of the same shape. If none is provided,
+        uses `get_disk_mask(velocity)`.
     :param out_size: Size of output image
     :param v_min: Minimum velocity value (in m/s)
     :param v_max: Maximum velocity value (in m/s)
     :param detrend_order: Polynomial order used to detrend the surface.
         If set to `None`, the data is not detrended.
     """
-    velocity, disk_mask = load_dopplergram(fits_file)
+    if disk_mask is None:
+        disk_mask = get_disk_mask(velocity)
     if detrend_order is not None:
         velocity = detrend_disk_surface(velocity, disk_mask, detrend_order)
     return render_dopplergram(velocity, disk_mask, v_min=v_min, v_max=v_max, out_size=out_size)
+
+
+def get_disk_mask(velocity: np.ndarray) -> np.ndarray:
+    """
+    Returns a boolean on-disk mask of the Dopplergram image (velocity data) indicating
+    where NaN/Inf values exist (due to being missing or off-disk).
+    """
+    return np.isfinite(velocity)
