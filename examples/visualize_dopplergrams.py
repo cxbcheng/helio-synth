@@ -45,7 +45,7 @@ def main():
 
     # Demo: the effect of different polynomial trend removals
     for trend_order in (None, 0, 2):
-        # Choose velocity bounds for the colormap (we calculate this in `examples/find_velocity_bounds.py`)
+        # Choose velocity bounds for the colormap (we calculate this in `examples/print_velocity_stats.py`)
         v_min = V_MIN[trend_order]
         v_max = V_MAX[trend_order]
 
