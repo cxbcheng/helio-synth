@@ -1,6 +1,6 @@
 import numpy as np
 
-GOLDEN_ANGLE = np.pi * (3 - np.sqrt(5))
+from heliosynth.constants import GOLDEN_ANGLE
 
 
 def construct_vogel_spiral(

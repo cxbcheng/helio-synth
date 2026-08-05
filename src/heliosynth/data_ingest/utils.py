@@ -128,12 +128,21 @@ def disk_velocity_zarr_path(
     return data_dir / disk_velocity_zarr_name(n_points, scale, cadence, product)
 
 
-def doppler_image_path(dataset_dir: Path, time: Time, format: Literal['webp', 'png', 'jpg'] = 'webp'):
+def doppler_image_path(
+    dataset_dir: Path,
+    time: Time,
+    detrend_order: int | None = None,
+    colormap: str = 'RdBu_r',
+    format: Literal['webp', 'png', 'jpg'] = 'webp'
+) -> Path:
     """
-    Constructs a Doppler image path unique to the timestamp and file format.
+    Constructs a Doppler image path unique to the timestamp, colormap, and file format.
+    Path is identified by dataset_dir / colormap / detrend_order / image_file
+    (the detrend_order directory is named 'raw').
     """
     require_tai(time)
-    return dataset_dir / f"{time.strftime('%Y%m%d_%H%M%S')}.{format}"
+    order_name = f"{detrend_order}" if detrend_order is not None else 'raw'
+    return dataset_dir / colormap / order_name / f"{time.strftime('%Y%m%d_%H%M%S')}.{format}"
 
 
 def covered_intervals(

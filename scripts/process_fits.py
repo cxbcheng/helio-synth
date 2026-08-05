@@ -11,6 +11,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.time import Time
 
+from heliosynth.constants import V_MIN, V_MAX
 from heliosynth.data_ingest.extraction import get_fits_files, extract_solar_image
 from heliosynth.data_ingest.storage import save_disk_velocity_zarr
 from heliosynth.data_ingest.utils import get_dataset_dir, fits_name_to_time, disk_velocity_zarr_path, doppler_image_path
@@ -28,6 +29,7 @@ def main():
     start_time = Time('2020-01-01 00:00:00', scale='tai')
     end_time = Time('2020-01-01 00:10:00', scale='tai')
     n_points = 4000
+    image_options = [('RdBu_r', 0), ('RdBu_r', 2), ('plasma', 0), ('plasma', 2)]
 
     raw_dataset_dir = get_dataset_dir(RAW_DATA_DIR, scale, cadence)
     im_dir = get_dataset_dir(IMAGES_DATA_DIR, scale, cadence)
@@ -63,8 +65,14 @@ def main():
         t_recs.append(t_rec)
         velocity_rows.append(im[rows, cols])
 
-        rendered = extract_solar_image(im, out_size=im_width, detrend_order=2)
-        rendered.save(doppler_image_path(im_dir, t_rec, 'webp'), format='WEBP')
+        for cmap, detrend_order in image_options:
+            rendered = extract_solar_image(im, out_size=im_width,
+                v_min=V_MIN[detrend_order],
+                v_max=V_MAX[detrend_order],
+                colormap=cmap, detrend_order=detrend_order)
+            im_path = doppler_image_path(im_dir, t_rec, detrend_order, cmap, 'webp')
+            im_path.parent.mkdir(parents=True, exist_ok=True)
+            rendered.save(im_path, format='WEBP')
 
     if not velocity_rows:
         raise ValueError(f"No valid samples found in {fits_files!r}")
