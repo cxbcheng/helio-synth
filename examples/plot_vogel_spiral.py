@@ -35,6 +35,7 @@ def main():
 
     # Plot the discretized spiral
     plt.figure(figsize=[10, 10])
+    plt.title(f"Vogel's spiral with {n_points:,} points")
     x, y = points[:, 0][::1], points[:, 1][::1]
     plt.scatter(x, y, s=1, color='black')
     plt.xlim(-radius, radius)
