@@ -34,8 +34,12 @@ def main():
 
     # Demo: the effect of different polynomial trend removals
     for trend_order in (None, 0, 2):
+        # Choose velocity bounds for the colormap (we find this in `examples/find_velocity_bounds.py`)
+        v_min = -3000 if trend_order != 2 else -450
+        v_max = 3000 if trend_order != 2 else 450
+
         # Load the Dopplergram as a PIL image
-        img = extract_solar_image(read_dopplergram(fits_path), detrend_order=trend_order)
+        img = extract_solar_image(read_dopplergram(fits_path), v_min=v_min, v_max=v_max, detrend_order=trend_order)
 
         # We can plot the PIL images easily
         plt.figure(figsize=(6, 6))
