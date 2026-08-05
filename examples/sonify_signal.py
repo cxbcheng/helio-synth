@@ -27,7 +27,7 @@ import soundfile as sf
 from scipy.fft import rfft, rfftfreq
 
 from heliosynth.data_ingest.ingest import get_velocity_timeseries
-from heliosynth.paths import EXAMPLE_DATA_DIR, AUDIO_DATA_DIR
+from heliosynth.paths import EXAMPLE_DATA_DIR, EXAMPLE_DOWNLOAD_DIR
 from heliosynth.processing.cleaning import interpolate_short_gaps, zero_fill_with_taper
 from heliosynth.processing.filter import filter_segments
 from heliosynth.processing.sonification import sonify_signal, audio_timeline
@@ -50,7 +50,7 @@ def main():
 
     # Audio parameters
     sample_rate = 8000
-    audio_path = AUDIO_DATA_DIR / 'solar_audio.wav'
+    audio_path = EXAMPLE_DOWNLOAD_DIR / 'solar_audio.wav'
 
     # Load velocity time series
     times, velocities = get_velocity_timeseries(
@@ -67,6 +67,7 @@ def main():
     audio = sonify_signal(velocities, f_orig=1/45, f_target=sample_rate, alpha=alpha)
 
     print(f"Downloading signal audio to {audio_path}...")
+    audio_path.parent.mkdir(parents=True, exist_ok=True)
     sf.write(audio_path, audio, sample_rate)
 
     times = audio_timeline(audio, sample_rate)
