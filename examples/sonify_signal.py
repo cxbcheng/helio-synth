@@ -59,7 +59,6 @@ def main():
         x=x,
         y=y,
         timeseries_data_dir=EXAMPLE_DATA_DIR)
-    elapsed = (times - times[0]).sec
 
     velocities = interpolate_short_gaps(velocities, max_gap=3)
     velocities = filter_segments(velocities, low_cutoff=low_cutoff, high_cutoff=high_cutoff, filter_order=2)
@@ -69,8 +68,6 @@ def main():
     print(f"Downloading signal audio to {audio_path}...")
     audio_path.parent.mkdir(parents=True, exist_ok=True)
     sf.write(audio_path, audio, sample_rate)
-
-    times = audio_timeline(audio, sample_rate)
 
     # Compute FFT of the sonified audio signal
     n_samples = len(audio)

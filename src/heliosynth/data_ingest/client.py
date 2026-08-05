@@ -7,7 +7,7 @@ import pandas as pd
 from astropy.time import Time
 from dotenv import load_dotenv
 
-from heliosynth.data_ingest.utils import get_dataset_dir, time_to_jsoc_str
+from heliosynth.path_utils import time_to_jsoc_str, get_dataset_dir
 from heliosynth.time_utils import require_tai
 
 logger = logging.getLogger(__name__)
@@ -81,9 +81,9 @@ def download_dopplergram_fits(
         raise ValueError("scale must be positive")
     if cadence <= 0 or cadence % 45 != 0:
         raise ValueError("cadence must be a positive multiple of 45")
-
+    resolution = round(4096 * scale)
     client = get_drms_client(email)
-    target_dir = get_dataset_dir(raw_data_dir=raw_data_dir, scale=scale, cadence=cadence)
+    target_dir = get_dataset_dir(raw_data_dir, resolution=resolution, cadence=cadence)
     target_dir.mkdir(parents=True, exist_ok=True)
 
     if request_id is not None:
