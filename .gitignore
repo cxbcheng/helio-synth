@@ -29,14 +29,19 @@ MANIFEST
 # Data folders
 #   Exclude example data.
 #   .gitkeep files to keep empty directories in history.
-data/raw/*
-data/processed/*
+# Ignore contents
+data/raw/**
+data/processed/**
+
+# Keep directory trees
+!data/raw/
+!data/processed/
 !data/raw/.gitkeep
-!data/data/processed/.gitkeep
-!data/data/processed/audio/.gitkeep
-!data/data/processed/timeseries/.gitkeep
-!data/data/processed/images/.gitkeep
-!data/examples/
+!data/processed/**/
+!data/processed/**/.gitkeep
+
+# Track example data
+!data/examples/**
 
 # PyInstaller
 #   Usually these files are written by a python script from a template
