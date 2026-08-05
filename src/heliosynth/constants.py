@@ -11,3 +11,6 @@ V_MAX = {
     0: 3000,
     2: 500
 }
+
+# Equivalently, np.pi * (3 - np.sqrt(5))
+GOLDEN_ANGLE = 2.399963229728653
