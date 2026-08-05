@@ -29,6 +29,7 @@ from the list of registered colormaps from Matplotlib:
 from astropy.time import Time
 from matplotlib import pyplot as plt
 
+from heliosynth.constants import V_MIN, V_MAX
 from heliosynth.data_ingest.extraction import extract_solar_image, read_dopplergram
 from heliosynth.data_ingest.utils import get_fits_path
 from heliosynth.paths import EXAMPLE_DATA_DIR
@@ -44,9 +45,9 @@ def main():
 
     # Demo: the effect of different polynomial trend removals
     for trend_order in (None, 0, 2):
-        # Choose velocity bounds for the colormap (we find this in `examples/find_velocity_bounds.py`)
-        v_min = -3000 if trend_order != 2 else -450
-        v_max = 3000 if trend_order != 2 else 450
+        # Choose velocity bounds for the colormap (we calculate this in `examples/find_velocity_bounds.py`)
+        v_min = V_MIN[trend_order]
+        v_max = V_MAX[trend_order]
 
         # Load the Dopplergram as a PIL image
         img = extract_solar_image(read_dopplergram(fits_path), v_min=v_min, v_max=v_max, detrend_order=trend_order, colormap=colormap)
