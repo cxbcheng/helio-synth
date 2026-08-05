@@ -1,7 +1,7 @@
 """
 Calculates basic statistical values for a raw and
 a bandpass-filtered Doppler velocity signal, particularly
-the min, max, and 1st and 99th percentiles.
+the min, max, 1st and 99th percentiles, mean, and standard deviation.
 
 Helpful for calculating v_min and v_max for generating image colormaps.
 
@@ -42,9 +42,14 @@ def main():
     # Raw velocity
     v_min, v_max = np.nanmin(velocities), np.nanmax(velocities)
     v_1, v_99 = np.nanpercentile(velocities, 1), np.nanpercentile(velocities, 99)
+    v_mean, v_std = np.nanmean(velocities), np.nanstd(velocities)
     print("-- Raw Velocity --\n"
-          f"Minimum velocity: {v_min:.2f} m/s\nMaximum velocity: {v_max:.2f} m/s\n"
-          f"1st percentile: {v_1:.2f} m/s\n99th percentile: {v_99:.2f} m/s\n")
+          f"Minimum: {v_min:.2f} m/s\n"
+          f"Maximum: {v_max:.2f} m/s\n"
+          f"1st percentile: {v_1:.2f} m/s\n"
+          f"99th percentile: {v_99:.2f} m/s\n"
+          f"Mean: {v_mean:.2f} m/s\n"
+          f"Standard deviation: {v_std:.2f} m/s\n")
 
     # Filtered velocity
     velocities = interpolate_short_gaps(velocities, max_gap=3)
@@ -53,10 +58,14 @@ def main():
 
     v_min, v_max = np.nanmin(velocities), np.nanmax(velocities)
     v_1, v_99 = np.nanpercentile(velocities, 1), np.nanpercentile(velocities, 99)
-
+    v_mean, v_std = np.nanmean(velocities), np.nanstd(velocities)
     print("-- Filtered Velocity --\n"
-          f"Minimum velocity: {v_min:.2f} m/s\nMaximum velocity: {v_max:.2f} m/s\n"
-          f"1st percentile: {v_1:.2f} m/s\n99th percentile: {v_99:.2f} m/s\n")
+          f"Minimum: {v_min:.2f} m/s\n"
+          f"Maximum: {v_max:.2f} m/s\n"
+          f"1st percentile: {v_1:.2f} m/s\n"
+          f"99th percentile: {v_99:.2f} m/s\n"
+          f"Mean: {v_mean:.2f} m/s\n"
+          f"Standard deviation: {v_std:.2f} m/s\n")
 
 
 if __name__ == "__main__":
