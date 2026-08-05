@@ -46,14 +46,19 @@ def render_dopplergram(
         disk_mask: np.ndarray,
         v_min: float = -3000,
         v_max: float = 3000,
-        out_size: int | None = None
+        out_size: int | None = None,
+        colormap: str = 'RdBu_r',
 ) -> Image.Image:
     """
     Renders a (cleaned) velocity field as an RGBA image using a diverging
     colormap (red: toward observer, blue: away), transparent off-disk.
+
+    The optional parameter `colormap` chooses a colormap from
+    the Matplotlib colormap registry:
+    https://matplotlib.org/stable/api/cm_api.html#matplotlib.cm._colormaps
     """
     normalized = np.clip((velocity - v_min) / (v_max - v_min), v_min, v_max)
-    rgba = colormaps['RdBu_r'](normalized, bytes=True)
+    rgba = colormaps[colormap](normalized, bytes=True)
     rgba[~disk_mask] = [0, 0, 0, 0]
 
     img = Image.fromarray(rgba, 'RGBA')

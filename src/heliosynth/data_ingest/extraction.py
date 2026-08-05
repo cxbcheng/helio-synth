@@ -161,7 +161,8 @@ def extract_solar_image(velocity: np.ndarray,
                         disk_mask: np.ndarray | None = None,
                         out_size: int | None = None,
                         v_min: float = -3000, v_max: float = 3000,
-                        detrend_order: int | None = 2) -> Image.Image:
+                        detrend_order: int | None = 2,
+                        colormap: str = 'RdBu_r') -> Image.Image:
     """
     Convenience wrapper to clean and render a single FITS file.
 
@@ -184,12 +185,13 @@ def extract_solar_image(velocity: np.ndarray,
     :param v_max: Maximum velocity value (in m/s)
     :param detrend_order: Polynomial order used to detrend the surface.
         If set to `None`, the data is not detrended.
+    :param colormap: Chooses a colormap from the Matplotlib colormap registry.
     """
     if disk_mask is None:
         disk_mask = get_disk_mask(velocity)
     if detrend_order is not None:
         velocity = detrend_disk_surface(velocity, disk_mask, detrend_order)
-    return render_dopplergram(velocity, disk_mask, v_min=v_min, v_max=v_max, out_size=out_size)
+    return render_dopplergram(velocity, disk_mask, v_min, v_max, out_size, colormap)
 
 
 def get_disk_mask(velocity: np.ndarray) -> np.ndarray:
