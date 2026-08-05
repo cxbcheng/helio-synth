@@ -14,3 +14,7 @@ V_MAX = {
 
 # Equivalently, np.pi * (3 - np.sqrt(5))
 GOLDEN_ANGLE = 2.399963229728653
+
+# The fraction of the solar radius that is not the solar limbs and
+# in general are points we want to sample from
+DEFAULT_DISK_RADIUS_FRACTION = 0.95

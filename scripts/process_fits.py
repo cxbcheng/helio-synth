@@ -11,7 +11,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.time import Time
 
-from heliosynth.constants import V_MIN, V_MAX
+from heliosynth.constants import V_MIN, V_MAX, DEFAULT_DISK_RADIUS_FRACTION
 from heliosynth.data_ingest.extraction import get_fits_files, extract_solar_image
 from heliosynth.data_ingest.storage import save_disk_velocity_zarr
 from heliosynth.path_utils import get_dataset_dir, fits_name_to_time, disk_velocity_zarr_path, doppler_image_path
@@ -26,7 +26,6 @@ def main():
     scale = 0.125
     res = round(scale * 4096)
     cadence = 45
-    im_width = round(4096 * scale)
     start_time = Time('2020-01-01 00:00:00', scale='tai')
     end_time = Time('2020-01-01 00:10:00', scale='tai')
     n_points = 4000
@@ -35,20 +34,21 @@ def main():
     raw_dataset_dir = get_dataset_dir(RAW_DATA_DIR, res, cadence)
     dataset_dir = get_dataset_dir(DATASETS_DATA_DIR, res, cadence)
     fits_files = get_fits_files(raw_dataset_dir, start_time, end_time)
+    solar_radius = res / 2
 
     sample_points = construct_vogel_spiral(
         n_points=n_points,
-        radius=im_width / 2,
+        radius=solar_radius * DEFAULT_DISK_RADIUS_FRACTION,
         snap_to_nearest_integer=True,
         include_center=True
     )
 
     # (x, y) centered coordinate system -> (row, col) image coordinate system
     sample_pixels = np.column_stack((
-        im_width // 2 - sample_points[:, 1],  # row
-        im_width // 2 + sample_points[:, 0],  # col
+        res // 2 - sample_points[:, 1],  # row
+        res // 2 + sample_points[:, 0],  # col
     ))
-    sample_pixels = np.clip(sample_pixels, 0, im_width - 1)
+    sample_pixels = np.clip(sample_pixels, 0, res - 1)
     rows, cols = sample_pixels[:, 0], sample_pixels[:, 1]
 
     velocity_rows, t_recs = [], []
@@ -67,7 +67,7 @@ def main():
         velocity_rows.append(im[rows, cols])
 
         for cmap, detrend_order in image_options:
-            rendered = extract_solar_image(im, out_size=im_width,
+            rendered = extract_solar_image(im, out_size=res,
                 v_min=V_MIN[detrend_order],
                 v_max=V_MAX[detrend_order],
                 colormap=cmap, detrend_order=detrend_order)
@@ -82,7 +82,7 @@ def main():
     times = Time(t_recs, scale='tai')
 
     zarr_path = disk_velocity_zarr_path(dataset_dir, n_points)
-    save_disk_velocity_zarr(zarr_path, times, velocity_series, sample_points, im_width)
+    save_disk_velocity_zarr(zarr_path, times, velocity_series, sample_points, res)
     logger.debug("Saved %d frames x %d points to %s", *velocity_series.shape, zarr_path)
 
 
