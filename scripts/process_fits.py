@@ -12,30 +12,30 @@ from astropy.io import fits
 from astropy.time import Time
 
 from heliosynth.data_ingest.extraction import get_fits_files, extract_solar_image
-from heliosynth.data_ingest.utils import get_dataset_dir, fits_name_to_time
-from heliosynth.paths import RAW_DATA_DIR, IMAGES_DATA_DIR
+from heliosynth.data_ingest.storage import save_disk_velocity_zarr
+from heliosynth.data_ingest.utils import get_dataset_dir, fits_name_to_time, disk_velocity_zarr_path, doppler_image_path
+from heliosynth.paths import RAW_DATA_DIR, IMAGES_DATA_DIR, TIMESERIES_DATA_DIR
 from heliosynth.sampling.vogel import construct_vogel_spiral
 
 logger = logging.getLogger(__name__)
 
 
 def main():
+    # Processing parameters
     scale = 0.125
     cadence = 45
     im_width = round(4096 * scale)
     start_time = Time('2020-01-01 00:00:00', scale='tai')
-    end_time = Time('2020-01-02 00:00:00', scale='tai')
+    end_time = Time('2020-01-01 00:10:00', scale='tai')
+    n_points = 4000
 
+    raw_dataset_dir = get_dataset_dir(RAW_DATA_DIR, scale, cadence)
     im_dir = get_dataset_dir(IMAGES_DATA_DIR, scale, cadence)
-    im_dir.mkdir(parents=True, exist_ok=True)
-    fits_files = get_fits_files(get_dataset_dir(RAW_DATA_DIR, scale, cadence), start_time, end_time)
-
-    n_timestamps = len(fits_files)
-    n_points = 2000
+    fits_files = get_fits_files(raw_dataset_dir, start_time, end_time)
 
     sample_points = construct_vogel_spiral(
         n_points=n_points,
-        radius=im_width/2,
+        radius=im_width / 2,
         snap_to_nearest_integer=True,
         include_center=True
     )
@@ -46,31 +46,35 @@ def main():
         im_width // 2 + sample_points[:, 0],  # col
     ))
     sample_pixels = np.clip(sample_pixels, 0, im_width - 1)
+    rows, cols = sample_pixels[:, 0], sample_pixels[:, 1]
 
-    # We will treat velocity as a function of sample points over time.
-    # Specifically, we express the velocity series as an M x N matrix
-    # where M = n_timestamps and N = n_points.
-    # For convenience, we will list timestamps and points as indices.
-    velocity_series = np.full((n_timestamps, n_points), np.nan)
+    velocity_rows, t_recs = [], []
 
     for t, fits_file in enumerate(fits_files):
-        with fits.open(fits_file) as hdul:
-            # Dopplergram image
-            im = hdul[1].data
+        try:
+            with fits.open(fits_file) as hdul:
+                # Dopplergram image
+                im = hdul[1].data
+        except (OSError, IOError, IndexError) as e:
+            logger.warning("Skipping %s: %s", fits_file.name, e)
+            continue
 
-            # Store velocity signals
-            for i, (row, col) in enumerate(sample_pixels):
-                velocity = im[row, col]
-                velocity_series[t][i] = velocity
+        t_rec = fits_name_to_time(fits_file.name)
+        t_recs.append(t_rec)
+        velocity_rows.append(im[rows, cols])
 
-            # Store image
-            rendered = extract_solar_image(im, out_size=im_width, detrend_order=0)
-            im_filename = fits_file.stem + '.webp'
-            rendered.save(im_dir / im_filename, format='WEBP')
+        rendered = extract_solar_image(im, out_size=im_width, detrend_order=2)
+        rendered.save(doppler_image_path(im_dir, t_rec, 'webp'), format='WEBP')
 
+    if not velocity_rows:
+        raise ValueError(f"No valid samples found in {fits_files!r}")
 
-    # TODO: save locally
-    logger.debug(velocity_series)
+    velocity_series = np.array(velocity_rows, dtype=np.float32)
+    times = Time(t_recs, scale='tai')
+
+    zarr_path = disk_velocity_zarr_path(TIMESERIES_DATA_DIR, n_points, scale, cadence)
+    save_disk_velocity_zarr(zarr_path, times, velocity_series, sample_points, im_width)
+    logger.debug("Saved %d frames x %d points to %s", *velocity_series.shape, zarr_path)
 
 
 if __name__ == "__main__":
