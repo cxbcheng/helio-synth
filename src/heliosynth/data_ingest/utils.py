@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from typing import Literal
 
 from astropy.time import Time
 
@@ -17,8 +18,8 @@ def time_to_jsoc_str(time: Time) -> str:
 
 def get_dataset_dir_name(scale: float, cadence: int, product: str = 'hmi.v_45s') -> str:
     """
-    Directory name for a raw dataset variant, identified by product,
-    download scale, and cadence.
+    Gets the path to the directory containing FITS files unique to the
+    given parameters.
 
     :param scale: Download rebin scale (see `download_dopplergram_fits`).
     :param cadence: Sampling cadence in seconds.
@@ -53,6 +54,8 @@ def time_to_fits_str(time: Time) -> str:
 def get_fits_name(time: Time, prefix: str = 'hmi.v_45s', suffix: str = '2.Dopplergram.fits') -> str:
     """
     Constructs a FITS filename following the standard JSOC dataset naming convention.
+    This function is effectively a helper for formatting astropy.time.Time as
+    strings matching the JSOC filename format.
 
     Examples:
 
@@ -60,6 +63,7 @@ def get_fits_name(time: Time, prefix: str = 'hmi.v_45s', suffix: str = '2.Dopple
     >>> get_fits_name(t)
     'hmi.v_45s.20200101_000000_TAI.2.Dopplergram.fits'
     """
+    require_tai(time)
     timestamp = time_to_fits_str(time)
     clean_prefix = prefix.rstrip('.')
     clean_suffix = suffix.lstrip('.')
@@ -68,14 +72,19 @@ def get_fits_name(time: Time, prefix: str = 'hmi.v_45s', suffix: str = '2.Dopple
 
 def get_dataset_dir(raw_data_dir: str | Path, scale: float, cadence: int, product: str = 'hmi.v_45s') -> Path:
     """
-    See `get_dataset_dir_name` for details.
+    Gets the path to the directory containing FITS files unique to the
+    given parameters. `raw_data_dir` is the general directory containing
+    this directory.
     """
     return Path(raw_data_dir) / get_dataset_dir_name(scale=scale, cadence=cadence, product=product)
 
 
 def get_fits_path(dataset_dir: str | Path, time: Time, prefix: str = 'hmi.v_45s', suffix: str = '2.Dopplergram.fits') -> Path:
     """
-    See `get_fits_name` for details.
+    Gets the path to a FITS file from a dataset directory (i.e. one containing
+    FITS files) by getting the standard name for a FITS file unique to a time.
+    This function is effectively a helper for formatting astropy.time.Time as
+    strings matching the JSOC filename format.
     """
     return Path(dataset_dir) / get_fits_name(time=time, prefix=prefix, suffix=suffix)
 
@@ -95,6 +104,36 @@ def fits_name_to_time(filename: str) -> Time:
     iso = (f"{date_part[0:4]}-{date_part[4:6]}-{date_part[6:8]}T"
            f"{time_part[0:2]}:{time_part[2:4]}:{time_part[4:6]}")
     return Time(iso, format='isot', scale='tai')
+
+
+def disk_velocity_zarr_name(n_points: int, scale: float, cadence: int, product: str = 'hmi.v_45s'):
+    """
+    Constructs a disk velocity zarr filename unique to the given parameters.
+    n_points indicates the number of sample points from the disk.
+    """
+    return f"{get_dataset_dir_name(scale, cadence, product)}_n{n_points}.zarr"
+
+
+def disk_velocity_zarr_path(
+    data_dir: Path,
+    n_points: int,
+    scale: float,
+    cadence: int,
+    product: str = 'hmi.v_45s'
+) -> Path:
+    """
+    Constructs a disk velocity zarr path unique to the given parameters.
+    n_points indicates the number of sample points from the disk.
+    """
+    return data_dir / disk_velocity_zarr_name(n_points, scale, cadence, product)
+
+
+def doppler_image_path(dataset_dir: Path, time: Time, format: Literal['webp', 'png', 'jpg'] = 'webp'):
+    """
+    Constructs a Doppler image path unique to the timestamp and file format.
+    """
+    require_tai(time)
+    return dataset_dir / f"{time.strftime('%Y%m%d_%H%M%S')}.{format}"
 
 
 def covered_intervals(
