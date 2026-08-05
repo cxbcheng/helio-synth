@@ -31,7 +31,7 @@ from matplotlib import pyplot as plt
 
 from heliosynth.constants import V_MIN, V_MAX
 from heliosynth.data_ingest.extraction import extract_solar_image, read_dopplergram
-from heliosynth.data_ingest.utils import get_fits_path
+from heliosynth.path_utils import get_fits_path
 from heliosynth.paths import EXAMPLE_DATA_DIR
 
 

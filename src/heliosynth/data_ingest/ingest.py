@@ -7,8 +7,9 @@ from astropy.time import Time
 from heliosynth.data_ingest.client import download_dopplergram_fits
 from heliosynth.data_ingest.extraction import extract_velocity_timeseries
 from heliosynth.data_ingest.storage import load_timeseries_npz, save_timeseries_npz
-from heliosynth.data_ingest.utils import get_dataset_dir_name, get_dataset_dir, missing_subranges, time_to_fits_str
-from heliosynth.paths import RAW_DATA_DIR, TIMESERIES_DATA_DIR
+from heliosynth.data_ingest.utils import missing_subranges
+from heliosynth.path_utils import get_dataset_dir_name, time_to_fits_str, get_dataset_dir
+from heliosynth.paths import RAW_DATA_DIR
 from heliosynth.time_utils import require_tai
 
 logger = logging.getLogger(__name__)
@@ -19,10 +20,10 @@ def get_velocity_timeseries(
         end_time: Time,
         x: int,
         y: int,
+        timeseries_data_dir: str | Path,
+        raw_data_dir: str | Path = RAW_DATA_DIR,
         scale: float = 0.125,
         cadence: int = 45,
-        raw_data_dir: str | Path = RAW_DATA_DIR,
-        timeseries_data_dir: str | Path = TIMESERIES_DATA_DIR,
         email: str | None = None,
         gap_tolerance: int = 2.5,
         force_recompute: bool = False,
@@ -57,6 +58,7 @@ def get_velocity_timeseries(
     """
     require_tai(start_time)
     require_tai(end_time)
+    resolution = round(4096 * scale)
 
     if download_missing:
         download_missing_fits(
@@ -68,8 +70,8 @@ def get_velocity_timeseries(
             raw_data_dir=raw_data_dir,
             email=email)
 
-    dataset_dir = get_dataset_dir(raw_data_dir, scale, cadence)
-    dataset_name = get_dataset_dir_name(scale, cadence)  # For cache file name
+    dataset_dir = get_dataset_dir(raw_data_dir, resolution, cadence)
+    dataset_name = get_dataset_dir_name(resolution, cadence)  # For cache file name
     range_tag = f"from{time_to_fits_str(start_time)}_to{time_to_fits_str(end_time)}"
     timeseries_cache_file = Path(timeseries_data_dir) / f"{dataset_name}_x{x}_y{y}_{range_tag}.npz"
     logger.info('%s', timeseries_cache_file)
@@ -107,7 +109,8 @@ def download_missing_fits(
     from previously-downloaded data downloads only that range, never the
     span between them.
     """
-    dataset_dir = get_dataset_dir(raw_data_dir=raw_data_dir, scale=scale, cadence=cadence)
+    resolution = round(scale * 4096)
+    dataset_dir = get_dataset_dir(raw_data_dir, resolution=resolution, cadence=cadence)
     gaps = missing_subranges(
         dataset_dir=dataset_dir,
         requested_start=start_time,

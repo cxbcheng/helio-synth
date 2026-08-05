@@ -35,12 +35,12 @@ Do not commit `.env` to git (it should already be listed in `.gitignore`).
 from astropy.time import Time
 
 from heliosynth.data_ingest.ingest import get_velocity_timeseries
-from heliosynth.paths import TIMESERIES_DATA_DIR, RAW_DATA_DIR
+from heliosynth.paths import RAW_DATA_DIR, EXAMPLE_DATA_DIR
 
 
 def main():
     # Change parameters here to download different timeframes
-    start_time = Time('2020-01-00 00:00:00', scale='tai')
+    start_time = Time('2020-01-08 00:00:00', scale='tai')
     end_time = Time('2020-01-08 06:00:00', scale='tai')
     scale = 0.125  # 512x512 solar disk image (~20 kb per image)
 
@@ -66,7 +66,7 @@ def main():
         scale=scale,
         download_missing=True,  # Downloads missing timestamps in the interval (if any)
         raw_data_dir=RAW_DATA_DIR,
-        timeseries_data_dir=TIMESERIES_DATA_DIR,
+        timeseries_data_dir=EXAMPLE_DATA_DIR,
         email=email)
 
     """

@@ -5,7 +5,7 @@ from PIL import Image
 from astropy.io import fits
 from astropy.time import Time, TimeDelta
 
-from heliosynth.data_ingest.utils import fits_name_to_time
+from heliosynth.path_utils import fits_name_to_time
 from heliosynth.processing.imaging import detrend_disk_surface, render_dopplergram
 from heliosynth.time_utils import require_tai
 
