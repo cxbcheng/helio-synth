@@ -3,11 +3,9 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 from astropy.io import fits
-from astropy.io.fits import HDUList
 from astropy.time import Time, TimeDelta
 
 from heliosynth.data_ingest.utils import fits_name_to_time
-from heliosynth.paths import RAW_DATA_DIR
 from heliosynth.processing.imaging import detrend_disk_surface, render_dopplergram
 from heliosynth.time_utils import require_tai
 

@@ -18,6 +18,13 @@ Plots three Dopplergrams:
    Removes a quadratic spatial trend, suppressing the dominant
    large-scale velocity field and revealing smaller-scale features,
    including granulation and p-mode oscillations.
+
+Additionally, you have the option below to change the colormap of
+the rendered Dopplergrams. The default is 'RdBu_r', but you can choose any
+from the list of registered colormaps from Matplotlib:
+
+>>> from matplotlib import colormaps
+>>> list(colormaps)
 """
 from astropy.time import Time
 from matplotlib import pyplot as plt
@@ -28,6 +35,9 @@ from heliosynth.paths import EXAMPLE_DATA_DIR
 
 
 def main():
+    # Parameter to change the displayed colormap
+    colormap = 'RdBu_r'
+
     # Here is a pre-downloaded FITS file from `data/examples` for convenience
     time = Time('2020-01-01 00:00:00', scale='tai')
     fits_path = get_fits_path(dataset_dir=EXAMPLE_DATA_DIR, time=time)
@@ -39,7 +49,7 @@ def main():
         v_max = 3000 if trend_order != 2 else 450
 
         # Load the Dopplergram as a PIL image
-        img = extract_solar_image(read_dopplergram(fits_path), v_min=v_min, v_max=v_max, detrend_order=trend_order)
+        img = extract_solar_image(read_dopplergram(fits_path), v_min=v_min, v_max=v_max, detrend_order=trend_order, colormap=colormap)
 
         # We can plot the PIL images easily
         plt.figure(figsize=(6, 6))
