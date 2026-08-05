@@ -35,6 +35,7 @@ data/processed/*
 !data/data/processed/.gitkeep
 !data/data/processed/audio/.gitkeep
 !data/data/processed/timeseries/.gitkeep
+!data/data/processed/images/.gitkeep
 !data/examples/
 
 # PyInstaller

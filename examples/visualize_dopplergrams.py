@@ -22,7 +22,7 @@ Plots three Dopplergrams:
 from astropy.time import Time
 from matplotlib import pyplot as plt
 
-from heliosynth.data_ingest.extraction import extract_solar_image
+from heliosynth.data_ingest.extraction import extract_solar_image, read_dopplergram
 from heliosynth.data_ingest.utils import get_fits_path
 from heliosynth.paths import EXAMPLE_DATA_DIR
 
@@ -35,7 +35,7 @@ def main():
     # Demo: the effect of different polynomial trend removals
     for trend_order in (None, 0, 2):
         # Load the Dopplergram as a PIL image
-        img = extract_solar_image(fits_file=fits_path, detrend_order=trend_order)
+        img = extract_solar_image(read_dopplergram(fits_path), detrend_order=trend_order)
 
         # We can plot the PIL images easily
         plt.figure(figsize=(6, 6))
