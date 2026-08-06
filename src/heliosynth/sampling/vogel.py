@@ -12,29 +12,37 @@ def construct_vogel_spiral(
 ) -> np.ndarray:
     """
     Vogel's spiral is a discretization of a Fermat spiral defined by
-        r_i = R\sqrt{i/N}, \theta_i=i\gamma
-    where \gamma = \pi(3-\sqrt{5}) is the golden angle, and i = \{1, ..., N\}.
+
+        rᵢ = R√(i/N),   θᵢ = iγ
+
+    where γ = π(3 − √5) is the golden angle, and i ∈ {1, …, N}.
 
     Vogel's spiral has the property that it is asymptotically uniformly dense.
-    For, since \gamma is irrational, we know by Weyl's Equidistribution Theorem
-    that \alpha = \frac{\gamma}{2\pi} means that the sequence {n\g}
-    for all nonzero integers n is uniformly distributed modulo 1, thus
-    its angle is uniformly dense in [0, 2\pi).
-    And by definition of r_i, we have \pi r_i^2 = \pi R^2/N, meaning
-    radius is uniformly dense in [0, R].
+    Since γ is irrational, α = γ/(2π) is irrational. By Weyl's
+    Equidistribution Theorem, the fractional parts of the sequence {nα},
+    for all nonzero integers n, are uniformly distributed modulo 1.
+    Thus, the angular coordinate is uniformly dense in [0, 2π).
 
-    A uniformly dense surface is not necessarily optimally spaced, but for our
-    use cases it is good enough.
+    By definition of rᵢ,
+
+        πrᵢ² = πR²(i/N),
+
+    so the density is uniform with respect to area over the disk.
+
+    A uniformly dense surface is not necessarily optimally spaced, but for
+    our use cases it is sufficient.
 
     :param n_points: Number of points to return.
     :param radius: Radius of the spiral.
     :param center: Coordinates of the center of the spiral.
     :param snap_to_nearest_integer: Whether to round points to integer values.
-    :param include_center: If set to `True`, the spiral is constructed using
-        `n_points - 1` spiral points with indices i = \{1, ..., N-1\}, and
-        the center is prepended so that the array contains `n_points`.
-    :return: Positions of the N points on the spiral on the Cartesian plane.
-        If `snap_to_nearest_integer` is True, the type of the array is set to int.
+    :param include_center: If True, the spiral is constructed using
+        `n_points - 1` spiral points with indices i ∈ {1, …, N − 1}, and
+        the center is prepended so that the returned array contains
+        `n_points`.
+    :return: Positions of the N points on the Cartesian plane.
+        If `snap_to_nearest_integer` is True, the returned array has dtype
+        `int`.
     """
     if n_points < 0:
         raise ValueError("n_points cannot be negative.")

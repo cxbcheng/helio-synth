@@ -1,15 +1,21 @@
 """
 Vogel's spiral is a discretization of a Fermat spiral defined by
-    r_i = R\sqrt{i/N}, \theta_i=i\gamma
-where \gamma = \pi(3-\sqrt{5}) is the golden angle, and i = \{1, ..., N\}.
+
+    rᵢ = R√(i/N),   θᵢ = iγ
+
+where γ = π(3 − √5) is the golden angle, and i ∈ {1, …, N}.
 
 Vogel's spiral has the property that it is asymptotically uniformly dense.
-For, since \gamma is irrational, we know by Weyl's Equidistribution Theorem
-that \alpha = \frac{\gamma}{2\pi} means that the sequence {n\g}
-for all nonzero integers n is uniformly distributed modulo 1, thus
-its angle is uniformly dense in [0, 2\pi).
-And by definition of r_i, we have \pi r_i^2 = \pi R^2/N, meaning
-radius is uniformly dense in [0, R].
+Since γ is irrational, α = γ/(2π) is irrational. By Weyl's
+Equidistribution Theorem, the fractional parts of the sequence {nα},
+for all nonzero integers n, are uniformly distributed modulo 1.
+Thus, the angular coordinate is uniformly dense in [0, 2π).
+
+By definition of rᵢ,
+
+    πrᵢ² = πR²(i/N),
+
+so the density is uniform with respect to area over the disk.
 
 A uniformly dense surface is not necessarily optimally spaced -- this
 becomes a spatial sampling design problem. For the scope of this project,
