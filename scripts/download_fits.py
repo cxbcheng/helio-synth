@@ -19,18 +19,19 @@ def main():
     start_time = Time('2026-07-01 00:00:00', scale='tai')
     end_time = Time('2026-08-01 00:00:00', scale='tai')
     res = 1024
-    scale = 4096 / res
     cadence = 45
     poll_interval = 300
-    raw_dataset_dir = get_dataset_dir(RAW_DATA_DIR, res, cadence)
+    dataset_dir = get_dataset_dir(RAW_DATA_DIR, res, cadence)
 
-    download_dopplergram_fits(start_time,
-                              end_time,
-                              raw_data_dir=raw_dataset_dir,
-                              scale=scale,
-                              cadence=cadence,
-                              poll_interval=poll_interval,
-                              request_id=None)
+    download_dopplergram_fits(
+        start_time,
+        end_time,
+        dataset_dir=dataset_dir,
+        resolution=res,
+        cadence=cadence,
+        poll_interval=poll_interval,
+        request_id=None,
+    )
 
 
 if __name__ == "__main__":
