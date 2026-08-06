@@ -67,14 +67,18 @@ def main():
         t_recs.append(t_rec)
         velocity_rows.append(im[rows, cols])
 
-        for cmap, detrend_order in image_options:
-            rendered = extract_solar_image(im, out_size=res,
-                v_min=V_MIN[detrend_order],
-                v_max=V_MAX[detrend_order],
-                colormap=cmap, detrend_order=detrend_order)
-            im_path = doppler_image_path(dataset_dir, t_rec, detrend_order, cmap, 'webp')
-            im_path.parent.mkdir(parents=True, exist_ok=True)
-            rendered.save(im_path, format='WEBP')
+        for detrend_order in detrend_orders:
+            disk_mask = get_disk_mask(im)
+            im_detrended = detrend_disk_surface(im, disk_mask, detrend_order)
+
+            for cmap in colormaps:
+                rendered = render_dopplergram(im_detrended, disk_mask,
+                    V_MIN[detrend_order], V_MAX[detrend_order],
+                    out_size=res, colormap=cmap)
+
+                im_path = doppler_image_path(dataset_dir, t_rec, detrend_order, cmap, 'webp')
+                im_path.parent.mkdir(parents=True, exist_ok=True)
+                rendered.save(im_path, format='WEBP')
 
     if not velocity_rows:
         raise ValueError(f"No valid samples found in {fits_files!r}")
