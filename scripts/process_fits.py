@@ -5,6 +5,7 @@ in the main app.
 Only processes the FITS files from the raw data directory.
 This should be executed after downloading new data.
 """
+import json
 import logging
 
 import numpy as np
@@ -12,10 +13,11 @@ from astropy.io import fits
 from astropy.time import Time
 
 from heliosynth.constants import V_MIN, V_MAX, DEFAULT_DISK_RADIUS_FRACTION
-from heliosynth.data_ingest.extraction import get_fits_files, extract_solar_image
+from heliosynth.data_ingest.extraction import get_fits_files, get_disk_mask
 from heliosynth.data_ingest.storage import save_disk_velocity_zarr
 from heliosynth.path_utils import get_dataset_dir, fits_name_to_time, disk_velocity_zarr_path, doppler_image_path
 from heliosynth.paths import RAW_DATA_DIR, DATASETS_DATA_DIR
+from heliosynth.processing.imaging import detrend_disk_surface, render_dopplergram
 from heliosynth.sampling.vogel import construct_vogel_spiral
 
 logger = logging.getLogger(__name__)
