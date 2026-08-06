@@ -84,10 +84,11 @@ def main():
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6))
 
     # Waveform plot
-    ax1.plot(audio, color='steelblue', lw=0.5)
-    ax1.set_xlabel('Audio Playback Time')
+    ax1.plot(audio_timeline(audio, fs=sample_rate), audio, color='steelblue', lw=0.5)
+    ax1.set_xlabel('Audio Playback Time [s]')
     ax1.set_ylabel('Audio Amplitude')
     ax1.set_title(f"Sonified Audio Waveform ({alpha}x Playback Speed)")
+    ax1.set_ylim(-1.0, 1.0)
     ax1.grid(True)
 
     # Frequency spectrum plot
