@@ -23,7 +23,7 @@ scripts/plot_signal_bandpass.py.
 import numpy as np
 from astropy.time import Time
 from matplotlib import pyplot as plt
-import soundfile as sf
+from scipy.io import wavfile
 from scipy.fft import rfft, rfftfreq
 
 from heliosynth.data_ingest.ingest import get_velocity_timeseries
@@ -67,7 +67,7 @@ def main():
 
     print(f"Downloading signal audio to {audio_path}...")
     audio_path.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(audio_path, audio, sample_rate)
+    wavfile.write(audio_path, sample_rate, audio)
 
     # Compute FFT of the sonified audio signal
     n_samples = len(audio)
