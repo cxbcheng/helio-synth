@@ -90,6 +90,22 @@ def main():
     save_disk_velocity_zarr(zarr_path, times, velocity_series, sample_points, res)
     logger.debug("Saved %d frames x %d points to %s", *velocity_series.shape, zarr_path)
 
+    # Save metadata
+    data = {
+        "width": res,
+        "height": res,
+        "cadence": cadence,
+        "images": {
+            "colormaps": colormaps,
+            "detrend_orders": detrend_orders,
+        },
+        "timeseries": {
+            "samples": [n_points],
+        },
+    }
+    with open(dataset_dir / 'metadata.json', 'w') as f:
+        json.dump(data, f, indent=4)
+
 
 if __name__ == "__main__":
     main()
