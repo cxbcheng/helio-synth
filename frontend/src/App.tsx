@@ -30,11 +30,13 @@ function App() {
 		return Array.from(jd1, (_, i) => timestampTag(jd1[i], jd2[i]));
 	}, [dataset]);
 
-	// Fixed-interval playback for the MVP. Real cadence/alpha-synced
-	// timing (get_animation_timestamps + snap_to_available) is a follow-up.
+	// Fixed-interval playback @ 60 fps
+	console.warn("NotImplementedWarning: Still a prototype. Real cadence/alpha-synced timing " +
+		"(get_animation_timestamps + snap_to_available) is not implemented yet.");
+
 	useEffect(() => {
 		if (!playing || frameTags.length === 0) return;
-		const id = setInterval(() => setFrameIndex((i) => (i + 1) % frameTags.length), 200);
+		const id = setInterval(() => setFrameIndex((i) => (i + 1) % frameTags.length), 1000/60);
 		return () => clearInterval(id);
 	}, [playing, frameTags.length]);
 
