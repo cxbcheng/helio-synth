@@ -29,7 +29,8 @@ def main():
     start_time = Time('2020-01-01 00:00:00', scale='tai')
     end_time = Time('2020-01-01 00:10:00', scale='tai')
     n_points = 4000
-    image_options = [('RdBu_r', 0), ('RdBu_r', 2), ('plasma', 0), ('plasma', 2)]
+    colormaps = ['RdBu_r', 'plasma']
+    detrend_orders = [0, 2]
 
     raw_dataset_dir = get_dataset_dir(RAW_DATA_DIR, res, cadence)
     dataset_dir = get_dataset_dir(DATASETS_DATA_DIR, res, cadence)
