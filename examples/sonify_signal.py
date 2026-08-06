@@ -67,7 +67,7 @@ def main():
 
     print(f"Downloading signal audio to {audio_path}...")
     audio_path.parent.mkdir(parents=True, exist_ok=True)
-    wavfile.write(audio_path, sample_rate, audio)
+    wavfile.write(audio_path, sample_rate, audio.astype(np.float32))
 
     # Compute FFT of the sonified audio signal
     n_samples = len(audio)
