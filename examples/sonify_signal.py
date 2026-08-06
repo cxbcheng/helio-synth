@@ -43,9 +43,15 @@ def main():
     low_cutoff = 0.001  # 1 mHz
     high_cutoff = 0.005  # 5 mHz
 
-    # To make the audio audible; increase to speed + pitch up
-    # In general, the new audio will be in the frequency range:
-    # [low_cutoff, high_cutoff] * alpha * sample_rate
+    """
+    alpha is the playback speed of the samples. An alpha of 1 is real time;
+    an alpha of 86400 plays 1 day of audio per 1 second.
+    
+    Make the audio audible by increasing this value.
+    In general, the new audio will be in the frequency range:
+    
+    [low_cutoff, high_cutoff] * alpha * sample_rate
+    """
     alpha = 80000
 
     # Audio parameters
