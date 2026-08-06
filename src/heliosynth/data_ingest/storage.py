@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import zarr
 from astropy.time import Time, TimeDelta
-from numcodecs import Blosc
+from zarr.codecs import BloscCodec
 
 from heliosynth.time_utils import require_tai
 
@@ -68,11 +68,11 @@ def save_disk_velocity_zarr(
     if len(times) != velocities.shape[0]:
         raise ValueError(f"times ({len(times)}) and velocities rows ({velocities.shape[0]}) mismatch")
 
-    root = zarr.open_group(str(path), mode='a')
+    root = zarr.open_group(str(path), mode='a', zarr_format=3)
     n_points = velocities.shape[1]
 
     if 'velocities' in root:
-        existing_points = root['sample_points'][:]
+        existing_points = np.asarray(root['sample_points'][:])
         if root.attrs['im_width'] != im_width or not np.array_equal(existing_points, sample_points):
             raise ValueError(
                 f"Sample layout mismatch at {path}: existing store was built "
@@ -82,23 +82,37 @@ def save_disk_velocity_zarr(
             )
         vel_arr, jd1_arr, jd2_arr = root['velocities'], root['t_jd1'], root['t_jd2']
         n_old = vel_arr.shape[0]
-        vel_arr.resize(n_old + len(times), n_points)
+        vel_arr.resize((n_old + len(times), n_points))
         vel_arr[n_old:] = velocities
-        jd1_arr.resize(n_old + len(times))
+        jd1_arr.resize((n_old + len(times),))
         jd1_arr[n_old:] = times.jd1
-        jd2_arr.resize(n_old + len(times))
+        jd2_arr.resize((n_old + len(times),))
         jd2_arr[n_old:] = times.jd2
     else:
-        compressor = Blosc(cname='zstd', clevel=3, shuffle=Blosc.SHUFFLE)
+        compressors = BloscCodec(cname='zstd', clevel=5, shuffle='shuffle')
         time_chunk = max(len(times), 1)
-        vel_arr = root.create_dataset(
-            'velocities', shape=velocities.shape, chunks=(time_chunk, n_points),
-            dtype='f4', compressor=compressor,
+        vel_arr = root.create_array(
+            'velocities',
+            shape=velocities.shape,
+            chunks=(time_chunk, n_points),
+            dtype='f4',
+            compressors=compressors,
         )
-        vel_arr[:] = velocities  # type: ignore[index]
+        vel_arr[:] = velocities
         for name, data in [('t_jd1', times.jd1), ('t_jd2', times.jd2)]:
-            arr = root.create_dataset(name, shape=(len(times),), chunks=(time_chunk,), dtype='f8')
-            arr[:] = data  # type: ignore[index]
-        root.create_dataset('sample_points', data=sample_points, dtype='f8')
+            arr = root.create_array(
+                name,
+                shape=(len(times),),
+                chunks=(time_chunk,),
+                dtype='f8',
+                compressors=compressors
+            )
+            arr[:] = data
+        root.create_array(
+            'sample_points',
+            chunks=sample_points.shape,
+            data=sample_points,
+            compressors=compressors,
+        )
         root.attrs['im_width'] = im_width
         root.attrs['scale'] = times.scale
