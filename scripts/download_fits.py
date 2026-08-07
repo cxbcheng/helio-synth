@@ -30,7 +30,7 @@ def main():
         resolution=res,
         cadence=cadence,
         poll_interval=poll_interval,
-        request_id='JSOC_20260807_002801',  # TODO remove request id
+        request_id=None,
     )
 
 
