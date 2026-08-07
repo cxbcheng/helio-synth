@@ -25,11 +25,10 @@ logger = logging.getLogger(__name__)
 
 def main():
     # Processing parameters
-    scale = 0.125
-    res = round(scale * 4096)
+    res = 512
     cadence = 45
     start_time = Time('2020-01-01 00:00:00', scale='tai')
-    end_time = Time('2020-01-01 00:10:00', scale='tai')
+    end_time = Time('2020-02-01 00:00:00', scale='tai')
     n_points = 4000
     colormaps = ['RdBu_r', 'plasma']
     detrend_orders = [0, 2]
