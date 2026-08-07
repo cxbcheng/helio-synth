@@ -11,6 +11,7 @@ import logging
 import numpy as np
 from astropy.io import fits
 from astropy.time import Time
+from tqdm import tqdm
 
 from heliosynth.constants import V_MIN, V_MAX, DEFAULT_DISK_RADIUS_FRACTION
 from heliosynth.data_ingest.extraction import get_fits_files, get_disk_mask
@@ -56,7 +57,7 @@ def main():
 
     velocity_rows, t_recs = [], []
 
-    for t, fits_file in enumerate(fits_files):
+    for t, fits_file in enumerate(tqdm(fits_files, desc='Processing FITS files', unit='files')):
         try:
             with fits.open(fits_file) as hdul:
                 # Dopplergram image
