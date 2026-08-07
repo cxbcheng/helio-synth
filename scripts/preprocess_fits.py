@@ -11,6 +11,7 @@ import logging
 import numpy as np
 from astropy.io import fits
 from astropy.time import Time
+from tqdm import tqdm
 
 from heliosynth.constants import V_MIN, V_MAX, DEFAULT_DISK_RADIUS_FRACTION
 from heliosynth.data_ingest.extraction import get_fits_files, get_disk_mask
@@ -32,6 +33,7 @@ def main():
     n_points = 4000
     colormaps = ['RdBu_r', 'plasma']
     detrend_orders = [0, 2]
+    time_chunk = 1024
 
     raw_dataset_dir = get_dataset_dir(RAW_DATA_DIR, res, cadence)
     dataset_dir = get_dataset_dir(DATASETS_DATA_DIR, res, cadence)
@@ -55,7 +57,7 @@ def main():
 
     velocity_rows, t_recs = [], []
 
-    for t, fits_file in enumerate(fits_files):
+    for t, fits_file in enumerate(tqdm(fits_files, desc='Processing FITS files', unit='files')):
         try:
             with fits.open(fits_file) as hdul:
                 # Dopplergram image
@@ -88,7 +90,7 @@ def main():
     times = Time(t_recs, scale='tai')
 
     zarr_path = disk_velocity_zarr_path(dataset_dir, n_points)
-    save_disk_velocity_zarr(zarr_path, times, velocity_series, sample_points, res)
+    save_disk_velocity_zarr(zarr_path, times, velocity_series, sample_points, res, time_chunk)
     logger.debug("Saved %d frames x %d points to %s", *velocity_series.shape, zarr_path)
 
     # Save metadata

@@ -43,6 +43,7 @@ def save_disk_velocity_zarr(
         velocities: np.ndarray,
         sample_points: np.ndarray,
         im_width: int,
+        time_chunk: int = 1024,
 ) -> None:
     """
     Appends a batch of (times, velocities) to a zarr store of multipoint
@@ -60,6 +61,7 @@ def save_disk_velocity_zarr(
         regardless of image orientation convention.
     :param im_width: Pixel width of the square image sample_points were
         computed against (needed to reinterpret them later).
+    :param time_chunk: Size of each chunk by time.
     :raises ValueError: if times/velocities lengths mismatch, or an
         existing store's sample layout doesn't match this batch's --
         appending mismatched layouts would silently misalign columns.
@@ -67,6 +69,8 @@ def save_disk_velocity_zarr(
     require_tai(times)
     if len(times) != velocities.shape[0]:
         raise ValueError(f"times ({len(times)}) and velocities rows ({velocities.shape[0]}) mismatch")
+    if time_chunk < 1:
+        raise ValueError(f"time_chunk ({time_chunk}) must be >= 1")
 
     root = zarr.open_group(str(path), mode='a', zarr_format=3)
     n_points = velocities.shape[1]
@@ -90,7 +94,6 @@ def save_disk_velocity_zarr(
         jd2_arr[n_old:] = times.jd2
     else:
         compressors = BloscCodec(cname='zstd', clevel=5, shuffle='shuffle')
-        time_chunk = max(len(times), 1)
         vel_arr = root.create_array(
             'velocities',
             shape=velocities.shape,

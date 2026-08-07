@@ -6,6 +6,7 @@ import drms
 import pandas as pd
 from astropy.time import Time
 from dotenv import load_dotenv
+from tqdm import tqdm
 
 from heliosynth.path_utils import time_to_jsoc_str, get_dataset_dir
 from heliosynth.time_utils import require_tai
@@ -205,7 +206,8 @@ def _extract_tars(tars: pd.DataFrame, target_dir: Path) -> list[str]:
         try:
             logger.info("Extracting %s...", tar_path.name)
             with tarfile.open(tar_path, 'r') as tar:
-                tar.extractall(path=target_dir, filter='data')
+                for member in tqdm(tar.getmembers(), desc='Extracting', unit='file'):
+                    tar.extract(member, path=target_dir, filter='data')
         except (tarfile.TarError, OSError) as e:
             logger.warning("Error extracting %s: %s", tar_path.name, e)
             failed.append(tar_path.name)
