@@ -23,7 +23,7 @@ scripts/plot_signal_bandpass.py.
 import numpy as np
 from astropy.time import Time
 from matplotlib import pyplot as plt
-import soundfile as sf
+from scipy.io import wavfile
 from scipy.fft import rfft, rfftfreq
 
 from heliosynth.data_ingest.ingest import get_velocity_timeseries
@@ -43,9 +43,15 @@ def main():
     low_cutoff = 0.001  # 1 mHz
     high_cutoff = 0.005  # 5 mHz
 
-    # To make the audio audible; increase to speed + pitch up
-    # In general, the new audio will be in the frequency range:
-    # [low_cutoff, high_cutoff] * alpha * sample_rate
+    """
+    alpha is the playback speed of the samples. An alpha of 1 is real time;
+    an alpha of 86400 plays 1 day of audio per 1 second.
+    
+    Make the audio audible by increasing this value.
+    In general, the new audio will be in the frequency range:
+    
+    [low_cutoff, high_cutoff] * alpha * sample_rate
+    """
     alpha = 80000
 
     # Audio parameters
@@ -67,7 +73,7 @@ def main():
 
     print(f"Downloading signal audio to {audio_path}...")
     audio_path.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(audio_path, audio, sample_rate)
+    wavfile.write(audio_path, sample_rate, audio.astype(np.float32))
 
     # Compute FFT of the sonified audio signal
     n_samples = len(audio)
@@ -78,10 +84,11 @@ def main():
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6))
 
     # Waveform plot
-    ax1.plot(audio, color='steelblue', lw=0.5)
-    ax1.set_xlabel('Audio Playback Time')
+    ax1.plot(audio_timeline(audio, fs=sample_rate), audio, color='steelblue', lw=0.5)
+    ax1.set_xlabel('Audio Playback Time [s]')
     ax1.set_ylabel('Audio Amplitude')
     ax1.set_title(f"Sonified Audio Waveform ({alpha}x Playback Speed)")
+    ax1.set_ylim(-1.0, 1.0)
     ax1.grid(True)
 
     # Frequency spectrum plot

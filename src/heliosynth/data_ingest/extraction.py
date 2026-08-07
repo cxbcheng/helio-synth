@@ -16,12 +16,15 @@ def extract_velocity_timeseries(
         end_time: Time | None = None,
 ) -> tuple[Time, np.ndarray]:
     """
-    Parses local FITS files in the provided directory and extracts a velocity timeseries
-    for a pixel coordinate (x, y) on the solar disk image relative to the scale specified
-    in the FITS file. Full resolution is 4096x4096; hence, valid positions include
-    x, y \in [0, int(4096*scale)-1].
-    If `start_index` or `end_index` specified, a subset of the files from the directory
-    will be processed. Otherwise, all the files will be extracted.
+    Parses local FITS files in the provided directory and extracts a velocity
+    timeseries for a pixel coordinate (x, y) on the solar disk image relative
+    to the scale specified in the FITS file. Full resolution is 4096 × 4096;
+    hence, valid positions satisfy
+
+        x, y ∈ [0, int(4096 * scale) - 1].
+
+    If `start_index` or `end_index` specified, a subset of the files from the
+    directory will be processed. Otherwise, all the files will be extracted.
     :param data_dir: Directory containing FITS files
     :param x: x pixel position
     :param y: y pixel position

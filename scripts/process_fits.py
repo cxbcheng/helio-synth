@@ -5,6 +5,7 @@ in the main app.
 Only processes the FITS files from the raw data directory.
 This should be executed after downloading new data.
 """
+import json
 import logging
 
 import numpy as np
@@ -12,10 +13,11 @@ from astropy.io import fits
 from astropy.time import Time
 
 from heliosynth.constants import V_MIN, V_MAX, DEFAULT_DISK_RADIUS_FRACTION
-from heliosynth.data_ingest.extraction import get_fits_files, extract_solar_image
+from heliosynth.data_ingest.extraction import get_fits_files, get_disk_mask
 from heliosynth.data_ingest.storage import save_disk_velocity_zarr
 from heliosynth.path_utils import get_dataset_dir, fits_name_to_time, disk_velocity_zarr_path, doppler_image_path
 from heliosynth.paths import RAW_DATA_DIR, DATASETS_DATA_DIR
+from heliosynth.processing.imaging import detrend_disk_surface, render_dopplergram
 from heliosynth.sampling.vogel import construct_vogel_spiral
 
 logger = logging.getLogger(__name__)
@@ -29,7 +31,8 @@ def main():
     start_time = Time('2020-01-01 00:00:00', scale='tai')
     end_time = Time('2020-01-01 00:10:00', scale='tai')
     n_points = 4000
-    image_options = [('RdBu_r', 0), ('RdBu_r', 2), ('plasma', 0), ('plasma', 2)]
+    colormaps = ['RdBu_r', 'plasma']
+    detrend_orders = [0, 2]
 
     raw_dataset_dir = get_dataset_dir(RAW_DATA_DIR, res, cadence)
     dataset_dir = get_dataset_dir(DATASETS_DATA_DIR, res, cadence)
@@ -66,14 +69,18 @@ def main():
         t_recs.append(t_rec)
         velocity_rows.append(im[rows, cols])
 
-        for cmap, detrend_order in image_options:
-            rendered = extract_solar_image(im, out_size=res,
-                v_min=V_MIN[detrend_order],
-                v_max=V_MAX[detrend_order],
-                colormap=cmap, detrend_order=detrend_order)
-            im_path = doppler_image_path(dataset_dir, t_rec, detrend_order, cmap, 'webp')
-            im_path.parent.mkdir(parents=True, exist_ok=True)
-            rendered.save(im_path, format='WEBP')
+        for detrend_order in detrend_orders:
+            disk_mask = get_disk_mask(im)
+            im_detrended = detrend_disk_surface(im, disk_mask, detrend_order)
+
+            for cmap in colormaps:
+                rendered = render_dopplergram(im_detrended, disk_mask,
+                    V_MIN[detrend_order], V_MAX[detrend_order],
+                    out_size=res, colormap=cmap)
+
+                im_path = doppler_image_path(dataset_dir, t_rec, detrend_order, cmap, 'webp')
+                im_path.parent.mkdir(parents=True, exist_ok=True)
+                rendered.save(im_path, format='WEBP')
 
     if not velocity_rows:
         raise ValueError(f"No valid samples found in {fits_files!r}")
@@ -84,6 +91,22 @@ def main():
     zarr_path = disk_velocity_zarr_path(dataset_dir, n_points)
     save_disk_velocity_zarr(zarr_path, times, velocity_series, sample_points, res)
     logger.debug("Saved %d frames x %d points to %s", *velocity_series.shape, zarr_path)
+
+    # Save metadata
+    data = {
+        "width": res,
+        "height": res,
+        "cadence": cadence,
+        "images": {
+            "colormaps": colormaps,
+            "detrend_orders": detrend_orders,
+        },
+        "timeseries": {
+            "samples": [n_points],
+        },
+    }
+    with open(dataset_dir / 'metadata.json', 'w') as f:
+        json.dump(data, f, indent=4)
 
 
 if __name__ == "__main__":

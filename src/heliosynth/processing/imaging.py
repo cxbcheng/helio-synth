@@ -6,13 +6,16 @@ from matplotlib import colormaps
 def detrend_disk_surface(data: np.ndarray, disk_mask: np.ndarray, order: int = 2) -> np.ndarray:
     """
     Fits and subtracts a 2D polynomial surface (the trend) from a disk.
-    The polynomial surface is computed by fitting a 2D polynomial basis
-    of degree 1 through degree `order` using least-squares.
-    The fitted surface is then evaluated across the entire array and
-    subtracted from the original data, returning a disk image which guarantees
-    zero k^th order spatial moments, i.e.
-    let R be the valid disk and k = `order`; then for each i \in {0, 1, ..., k},
-        \sum_{(x, y)\in D} x^iy^{k-i}R(x,y)=0
+
+    The polynomial surface is computed by fitting a 2D polynomial basis of
+    degrees 1 through `order` using least-squares. The fitted surface is then
+    evaluated across the entire array and subtracted from the original data.
+
+    The resulting disk image has zero spatial moments through degree `order`.
+    Specifically, let D denote the valid disk, let R(x, y) denote the detrended
+    image, and let k = `order`. Then, for every i ∈ {0, 1, …, k},
+
+    Σ_{(x, y) in D} { x^i y^{k-i} R(x, y) } = 0.
     """
     if order < 0:
         raise ValueError("order must be a positive integer")

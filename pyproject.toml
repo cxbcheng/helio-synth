@@ -7,30 +7,17 @@ name = "heliosynth"
 version = "0.1.0"
 description = "Helioseismic data processing and sonification pipeline"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.13"
 dependencies = [
-    # Data Fetching & Helioseismology
     "sunpy",
     "drms",
     "astropy",
-    # Signal Processing & Math
     "numpy",
     "scipy",
     "scikit-learn",
-    # UI & Visualization
     "matplotlib",
-    "pyqt6",
-    # Storage
-    "zarr",
-    # Audio Processing & Utilities
-    "soundfile",
-    "pydub",
+    "zarr~=3.0",
     "python-dotenv",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest",
 ]
 
 [tool.setuptools.packages.find]

@@ -1,0 +1,20 @@
+.app {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+	padding: 2rem;
+	font-family: system-ui, sans-serif;
+}
+
+.controls {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+canvas {
+	background: none;
+}
