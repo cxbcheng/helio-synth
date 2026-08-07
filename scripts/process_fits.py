@@ -32,6 +32,7 @@ def main():
     n_points = 4000
     colormaps = ['RdBu_r', 'plasma']
     detrend_orders = [0, 2]
+    time_chunk = 1024
 
     raw_dataset_dir = get_dataset_dir(RAW_DATA_DIR, res, cadence)
     dataset_dir = get_dataset_dir(DATASETS_DATA_DIR, res, cadence)
@@ -88,7 +89,7 @@ def main():
     times = Time(t_recs, scale='tai')
 
     zarr_path = disk_velocity_zarr_path(dataset_dir, n_points)
-    save_disk_velocity_zarr(zarr_path, times, velocity_series, sample_points, res)
+    save_disk_velocity_zarr(zarr_path, times, velocity_series, sample_points, res, time_chunk)
     logger.debug("Saved %d frames x %d points to %s", *velocity_series.shape, zarr_path)
 
     # Save metadata
